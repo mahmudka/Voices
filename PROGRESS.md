@@ -7,8 +7,8 @@
 
 ## Статус проекта
 
-**Фаза:** Phase 1 — ЗАВЕРШЕНА
-**Текущий шаг:** все шаги 0–11 завершены
+**Фаза:** Phase 1 (продолжение)
+**Текущий шаг:** 13 — UI redesign (Claude Design)
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -189,6 +189,32 @@
 
 ---
 
+### Шаг 12 — Spectral morphing (Path B)
+**Статус:** завершён
+**Задача:** спектральный морфинг как второй уровень конвертации
+**Acceptance criteria:**
+- [x] utils/spectral_morph.py: 6 аналитических голосовых профилей (формантная модель + спектральный наклон)
+- [x] STFT морфинг с кепстральным сглаживанием огибающей, оригинальная фаза сохранена
+- [x] 3-уровневый routing: RVC → spectral_morph → placeholder
+- [x] /health показывает pipeline=spectral_morph и morph_voices
+- [x] Все 6 голосов дают разный спектральный контент (подтверждено на тестовых WAV)
+**Testing:** male_deep centroid 516Hz vs male_neutral 824Hz — морфинг работает
+
+---
+
+### Шаг 13 — UI redesign (Claude Design)
+**Статус:** не начат
+**Задача:** красивый интерфейс, кнопки меняют цвет, анимации состояний
+**Acceptance criteria:**
+- [ ] Кнопки: idle → hover → pressed (scale+color) → loading → success/error
+- [ ] VoiceGallery: анимация выбора, glow по цвету пола
+- [ ] Progress bar с gradient sweep + fade-in stage label
+- [ ] Dark/light theme switcher
+- [ ] Waveform player: анимированные play/pause кнопки
+**Testing:** визуальная проверка в браузере
+
+---
+
 ### Шаг 11 — Интеграционное тестирование
 **Статус:** завершён
 **Задача:** полный end-to-end тест всего пайплайна
@@ -236,3 +262,5 @@
 | 9 | 2026-06-04 | HuBERT/RVC ONNX инфраструктура (hubert.py, rvc.py), WORLD linear interpolation, download_models.ps1, SKILLS.md обновлён |
 | 10 | 2026-06-04 | VoiceGallery (грид карточек), VoiceParams (age+timbre), App.jsx restructure, api.js fetchVoices/voiceId, build 327KB |
 | 11 | 2026-06-04 | E2E тесты всех endpoint'ов; фикс: промежуточный _converted.wav утекал в input/; voiceId добавлен в GET /api/history |
+| 12 | 2026-06-04 | Spectral morphing Path B: utils/spectral_morph.py (6 аналитических профилей, STFT+кепстр), 3-уровневый routing в main.py |
+| 13 | — | UI redesign (Claude Design): кнопки с цветом, анимации, тёмная тема |

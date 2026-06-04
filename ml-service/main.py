@@ -38,11 +38,15 @@ async def startup():
 
 @app.get("/health")
 def health():
+    from utils.spectral_morph import voice_ids
     hubert_ok = get_hubert_session() is not None
     return {
         "status": "ok",
+        "pipeline": "rvc" if hubert_ok else "spectral_morph",
         "hubert": hubert_ok,
         "rvc_pipeline": hubert_ok,
+        "spectral_morph": True,
+        "morph_voices": voice_ids(),
         "providers": get_placeholder_session().get_providers(),
     }
 
@@ -113,7 +117,7 @@ async def convert(
             "X-Session-VoiceType": voice_type,
             "X-Session-Age":       str(age),
             "X-Session-Timbre":    timbre,
-            "X-Pipeline":          "rvc" if _rvc_available(voice_id) else "placeholder",
+            "X-Pipeline":          _active_pipeline(voice_id),
         },
     )
 
@@ -130,21 +134,49 @@ def _rvc_available(voice_id: str | None) -> bool:
     return hubert is not None and rvc is not None
 
 
+def _morph_available(voice_id: str | None) -> bool:
+    if not voice_id:
+        return False
+    from utils.spectral_morph import voice_ids
+    return voice_id in voice_ids()
+
+
+def _active_pipeline(voice_id: str | None) -> str:
+    if _rvc_available(voice_id):
+        return "rvc"
+    if _morph_available(voice_id):
+        return "spectral_morph"
+    return "placeholder"
+
+
 async def _run_conversion(
     audio: np.ndarray,
     sr: int,
     f0_data: dict,
     voice_id: str | None,
 ) -> tuple[np.ndarray, int]:
-    """Route to RVC pipeline or placeholder."""
-
+    """
+    Three-tier routing:
+      1. RVC ONNX        — when content-vec-best.onnx + voice .onnx present
+      2. Spectral morph  — analytical formant-profile morphing (always available)
+      3. Placeholder     — identity transform (fallback)
+    """
+    # Tier 1: RVC
     hubert_session = get_hubert_session()
     rvc_session = get_rvc_session(voice_id) if voice_id else None
-
     if hubert_session is not None and rvc_session is not None:
         return _run_rvc(audio, sr, f0_data, rvc_session, hubert_session)
 
-    # Fallback: identity transform — WORLD will do the voice shaping
+    # Tier 2: Spectral morphing
+    if voice_id and _morph_available(voice_id):
+        from utils.spectral_morph import morph_spectrum
+        try:
+            morphed = morph_spectrum(audio, sr, voice_id)
+            return morphed, sr
+        except Exception as exc:
+            logger.error("Spectral morph failed: %s — falling back to placeholder", exc)
+
+    # Tier 3: Identity placeholder
     placeholder = get_placeholder_session()
     return run_placeholder(placeholder, audio), sr
 
