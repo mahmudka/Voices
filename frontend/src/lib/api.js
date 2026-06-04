@@ -1,8 +1,15 @@
 const BASE = '/api'
 
+export async function fetchVoices() {
+  const res = await fetch(`${BASE}/voices`)
+  if (!res.ok) throw new Error(res.statusText)
+  return res.json()
+}
+
 export async function uploadAndConvert(file, params) {
   const form = new FormData()
   form.append('file', file)
+  if (params.voiceId) form.append('voiceId', params.voiceId)
   form.append('voiceType', params.voiceType)
   form.append('age', String(params.age))
   form.append('timbre', params.timbre)

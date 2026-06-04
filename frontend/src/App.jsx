@@ -5,21 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { FileDropZone } from '@/components/FileDropZone'
+import { VoiceGallery } from '@/components/VoiceGallery'
 import { VoiceParams } from '@/components/VoiceParams'
 import { WaveformPlayer } from '@/components/WaveformPlayer'
 import { HistoryList } from '@/components/HistoryList'
 
 import {
-  uploadAndConvert, rerender, fetchHistory,
-  deleteConversion, deleteAll,
+  fetchVoices, uploadAndConvert, rerender,
+  fetchHistory, deleteConversion, deleteAll,
   startRecording, stopRecording,
 } from '@/lib/api'
 import { ensureConnected } from '@/lib/signalr'
 
-const DEFAULT_PARAMS = { voiceType: 'male', age: 30, timbre: 'medium' }
+const DEFAULT_PARAMS = { voiceId: null, voiceType: 'male', age: 35, timbre: 'medium' }
 
 export default function App() {
+  const [voices, setVoices] = useState([])
   const [params, setParams] = useState(DEFAULT_PARAMS)
+
   const [file, setFile] = useState(null)
   const [inputUrl, setInputUrl] = useState(null)
   const [outputUrl, setOutputUrl] = useState(null)
@@ -35,6 +38,12 @@ export default function App() {
   const [history, setHistory] = useState([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
 
+  // Load voices catalog
+  useEffect(() => {
+    fetchVoices().then(setVoices).catch(() => {})
+  }, [])
+
+  // Load history
   useEffect(() => {
     fetchHistory()
       .then(setHistory)
@@ -42,6 +51,7 @@ export default function App() {
       .finally(() => setHistoryLoaded(true))
   }, [])
 
+  // SignalR setup
   useEffect(() => {
     let conn
     ensureConnected().then(c => {
@@ -71,6 +81,7 @@ export default function App() {
     }
   }, [])
 
+  // Join/leave SignalR session group
   useEffect(() => {
     if (!sessionId) return
     ensureConnected().then(c => c.invoke('JoinSession', sessionId)).catch(() => {})
@@ -78,6 +89,8 @@ export default function App() {
       ensureConnected().then(c => c.invoke('LeaveSession', sessionId)).catch(() => {})
     }
   }, [sessionId])
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   function reset() {
     setFile(null)
@@ -96,6 +109,17 @@ export default function App() {
     setFile(f)
     setInputUrl(URL.createObjectURL(f))
   }
+
+  function handleVoiceSelect(voice) {
+    setParams({
+      voiceId:      voice.voiceId,
+      voiceType:    voice.gender,
+      age:          voice.defaultAge,
+      timbre:       voice.defaultTimbre,
+    })
+  }
+
+  // ── Convert / Record ──────────────────────────────────────────────────────
 
   async function handleConvert() {
     if (!file) return
@@ -135,9 +159,10 @@ export default function App() {
       setRecording(false)
       try {
         const data = await stopRecording({
+          voiceId:   params.voiceId,
           voiceType: params.voiceType,
-          age: params.age,
-          timbre: params.timbre,
+          age:       params.age,
+          timbre:    params.timbre,
         })
         setSessionId(data.sessionId)
         setInputUrl(`/api/audio/input/${encodeURIComponent(data.inputFile)}`)
@@ -161,9 +186,16 @@ export default function App() {
     }
   }
 
+  // ── History ───────────────────────────────────────────────────────────────
+
   function handleSelectHistory(item) {
     setSessionId(item.sessionId)
-    setParams({ voiceType: item.voiceType, age: item.age, timbre: item.timbre })
+    setParams({
+      voiceId:   item.voiceId ?? null,
+      voiceType: item.voiceType,
+      age:       item.age,
+      timbre:    item.timbre,
+    })
     setFile({ name: item.inputFile })
     setInputUrl(item.inputPath ? `/api/audio/input/${encodeURIComponent(item.inputFile)}` : null)
     if (item.outputFile) {
@@ -185,20 +217,54 @@ export default function App() {
     reset()
   }
 
+  // ── Derived ───────────────────────────────────────────────────────────────
+
   const busy = status === 'converting' || recording
+
+  const selectedVoice = voices.find(v => v.voiceId === params.voiceId)
+  const ageMin = selectedVoice?.ageMin ?? 5
+  const ageMax = selectedVoice?.ageMax ?? 80
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-5xl space-y-6">
 
+        {/* Header */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Voice Converter</h1>
-          <p className="text-sm text-muted-foreground mt-1">Конвертация тембра и пола голоса · WORLD вокодер</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Конвертация голоса · WORLD вокодер + RVC ONNX
+          </p>
         </div>
 
+        {/* Voice Gallery — full width */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">
+              Выберите голос
+              {params.voiceId && (
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  · {selectedVoice?.name}
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <VoiceGallery
+              voices={voices}
+              selectedId={params.voiceId}
+              onSelect={handleVoiceSelect}
+              disabled={busy}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Two-column layout */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_300px]">
 
-          {/* Left */}
+          {/* ── Left column ── */}
           <div className="space-y-4">
 
             <Card>
@@ -211,8 +277,10 @@ export default function App() {
                   disabled={status === 'converting'}
                   className="w-full"
                 >
-                  {recording ? <MicOff className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
-                  {recording ? 'Остановить запись' : 'Записать с микрофона (Shure MV7i)'}
+                  {recording
+                    ? <><MicOff className="h-4 w-4 mr-2" />Остановить запись</>
+                    : <><Mic className="h-4 w-4 mr-2" />Записать с микрофона (Shure MV7i)</>
+                  }
                 </Button>
                 {file && (
                   <p className="text-xs text-muted-foreground truncate">{file.name}</p>
@@ -256,22 +324,42 @@ export default function App() {
 
           </div>
 
-          {/* Right */}
+          {/* ── Right column ── */}
           <div className="space-y-4">
 
             <Card>
               <CardHeader><CardTitle className="text-base">Параметры</CardTitle></CardHeader>
               <CardContent>
-                <VoiceParams params={params} onChange={setParams} disabled={busy} />
+                <VoiceParams
+                  params={params}
+                  onChange={setParams}
+                  disabled={busy}
+                  ageMin={ageMin}
+                  ageMax={ageMax}
+                />
               </CardContent>
             </Card>
 
             <div className="space-y-2">
-              <Button className="w-full" onClick={handleConvert} disabled={!file || busy}>
+              <Button
+                className="w-full"
+                onClick={handleConvert}
+                disabled={!file || busy || !params.voiceId}
+              >
                 {status === 'converting' ? 'Конвертирую...' : 'Конвертировать'}
               </Button>
+              {!params.voiceId && !busy && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Выберите голос выше
+                </p>
+              )}
               {sessionId && (status === 'done' || status === 'error') && (
-                <Button variant="outline" className="w-full" onClick={handleRerender} disabled={busy}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleRerender}
+                  disabled={busy}
+                >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Рендер с новыми параметрами
                 </Button>
@@ -282,7 +370,12 @@ export default function App() {
               <CardHeader><CardTitle className="text-base">История</CardTitle></CardHeader>
               <CardContent>
                 {historyLoaded
-                  ? <HistoryList items={history} onDelete={handleDelete} onDeleteAll={handleDeleteAll} onSelect={handleSelectHistory} />
+                  ? <HistoryList
+                      items={history}
+                      onDelete={handleDelete}
+                      onDeleteAll={handleDeleteAll}
+                      onSelect={handleSelectHistory}
+                    />
                   : <p className="text-sm text-muted-foreground">Загрузка...</p>
                 }
               </CardContent>

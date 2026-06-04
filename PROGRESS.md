@@ -8,7 +8,7 @@
 ## Статус проекта
 
 **Фаза:** Phase 1
-**Текущий шаг:** 10 — UI redesign (голосовая галерея)
+**Текущий шаг:** 11 — Интеграционное тестирование
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -174,14 +174,18 @@
 ---
 
 ### Шаг 10 — UI redesign (голосовая галерея)
-**Статус:** не начат
+**Статус:** завершён
 **Задача:** новый VoiceParams — карточки голосов, слайдеры возраст/высота/тембр
 **Acceptance criteria:**
-- [ ] Грид карточек голосов из /api/voices
-- [ ] Активная карточка выделена (border accent + fill)
-- [ ] Слайдер возраста с подписями (Ребёнок / Взрослый / Пожилой)
-- [ ] Тембр — 3 кнопки с визуальным акцентом
-**Testing:** UI открывается, выбор голоса меняет параметры конвертации
+- [x] VoiceGallery.jsx: грид 2×3 карточек из /api/voices, цвета по полу (blue/rose/amber)
+- [x] Активная карточка: border-primary + bg-primary/5 + точка-индикатор
+- [x] VoiceParams.jsx: слайдер возраста с подписями мин/макс + ageCategory (Ребёнок…Пожилой)
+- [x] Тембр: 3 кнопки с визуальным весом (bold/normal/light font)
+- [x] App.jsx: voiceId в params, VoiceGallery над двухколоночным layout, ageMin/ageMax из выбранного голоса
+- [x] api.js: fetchVoices(), uploadAndConvert/rerender передают voiceId
+- [x] Конвертировать заблокирован пока не выбран голос
+- [x] npm run build → OK, 327KB JS
+**Testing:** сборка успешна
 
 ---
 
@@ -226,3 +230,4 @@
 | 7 | 2026-06-04 | Pixi 0.70.1, pyproject.toml (conda-forge win-64), soundfile/libsndfile разблокирован, start.ps1 → pixi run |
 | 8 | 2026-06-04 | VoicePreset переработан, voices.json (6 голосов), EF миграция VoiceLibrary, GET /api/voices, VoiceSeeder, ml-service voice_id routing |
 | 9 | 2026-06-04 | HuBERT/RVC ONNX инфраструктура (hubert.py, rvc.py), WORLD linear interpolation, download_models.ps1, SKILLS.md обновлён |
+| 10 | 2026-06-04 | VoiceGallery (грид карточек), VoiceParams (age+timbre), App.jsx restructure, api.js fetchVoices/voiceId, build 327KB |
