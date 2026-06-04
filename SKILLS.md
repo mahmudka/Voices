@@ -129,6 +129,18 @@ CPUExecutionProvider — fallback если DML недоступен.
 - Какие конкретно ONNX модели для voice conversion будут использоваться (уточнить на шаге ML сервиса)
 - Совместимость cpp-httplib с ARM64 Windows MSVC — проверить при сборке
 
+## Проверенные ограничения (Python ARM64 Windows)
+
+| Пакет | Проблема | Решение |
+|---|---|---|
+| soundfile 0.13.1 | нет libsndfile.dll для ARM64 | scipy.io.wavfile для WAV I/O |
+| numba / llvmlite | нет wheel для ARM64 Win, сборка из исходников требует LLVM | не использовать; librosa.pyin/yin недоступны |
+| uvicorn[standard] | httptools не собирается без компилятора | uvicorn без extras |
+| onnxruntime 1.26.0 | DmlExecutionProvider недоступен (только CPU+Azure) | нужен onnxruntime-directml |
+
+### F0 извлечение без numba
+librosa.pyin/yin требуют numba. Используется custom autocorrelation через scipy.signal.correlate (точность достаточна для пайплайна; точная F0 берётся из WORLD vocoder на шаге 4).
+
 ---
 
 ## История изменений

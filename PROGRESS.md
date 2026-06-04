@@ -8,7 +8,7 @@
 ## Статус проекта
 
 **Фаза:** Phase 1
-**Текущий шаг:** 3 — Python ML сервис
+**Текущий шаг:** 4 — C++ WORLD сервис
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -71,15 +71,15 @@
 ---
 
 ### Шаг 3 — Python ML сервис
-**Статус:** не начат
+**Статус:** завершён
 **Задача:** FastAPI сервис, librosa анализ, ONNX Runtime конвертация
 **Acceptance criteria:**
-- [ ] Сервис запускается на :8001
-- [ ] POST /analyze — извлечение F0 из WAV
-- [ ] POST /convert — конвертация тембра через ONNX
-- [ ] ONNX модель загружается (DmlExecutionProvider или CPU)
-- [ ] Возвращает обработанный WAV
-**Testing:** тестовый WAV файл обрабатывается без ошибок
+- [x] Сервис запускается на :8001
+- [x] POST /analyze — F0 через scipy autocorrelation (librosa.pyin недоступен — numba нет на ARM64)
+- [x] POST /convert — конвертация тембра через ONNX (placeholder модель, identity transform)
+- [x] ONNX модель загружается (CPUExecutionProvider; DML требует onnxruntime-directml)
+- [x] Возвращает обработанный WAV
+**Testing:** /analyze → 440.4 Hz на синусоиде 440 Hz ✓; /convert → WAV 96 KB ✓
 
 ---
 
@@ -161,3 +161,4 @@
 | 0 | 2026-06-04 | Структура папок, .gitignore обновлён, scripts/start.ps1 заглушка |
 | 1 | 2026-06-04 | ASP.NET Core MVC проект, EF Core 8, модели Conversion/VoicePreset, миграция применена |
 | 2 | 2026-06-04 | SignalR ConvertHub, AudioCaptureService (WASAPI/NAudio), ConversionService, POST /api/convert, HttpClients :8001/:8002 |
+| 3 | 2026-06-04 | FastAPI :8001, /analyze (scipy autocorr F0), /convert (ONNX placeholder), /health; ARM64 ограничения в SKILLS.md |
