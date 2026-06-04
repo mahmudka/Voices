@@ -8,7 +8,7 @@
 ## Статус проекта
 
 **Фаза:** Phase 1
-**Текущий шаг:** 7 — Интеграционное тестирование
+**Текущий шаг:** 8 — Voice library (бэкенд)
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -129,13 +129,64 @@
 
 ---
 
-### Шаг 7 — Интеграционное тестирование
+### Шаг 7 — Pixi + pyproject.toml
+**Статус:** завершён
+**Задача:** мигрировать ml-service с venv+requirements.txt на Pixi+conda-forge
+**Acceptance criteria:**
+- [x] pyproject.toml создан с [tool.pixi.workspace], платформа win-64
+- [x] requirements.txt удалён
+- [x] pixi install выполнен успешно
+- [x] Все пакеты импортируются: fastapi, onnxruntime, librosa, scipy, numpy, onnx
+- [x] soundfile работает (conda-forge libsndfile)
+- [x] start.ps1 обновлён: pixi run serve вместо прямого python.exe
+- [x] .gitignore дополнен (.pixi/)
+**Testing:** pixi run python -c "import fastapi, onnxruntime, librosa..." → OK; soundfile 0.13.1 → OK
+
+---
+
+### Шаг 8 — Voice library (бэкенд)
+**Статус:** не начат
+**Задача:** структура библиотеки голосов, API, БД
+**Acceptance criteria:**
+- [ ] shared/models/ создана, voices.json с каталогом голосов
+- [ ] VoicePresets таблица заполнена из voices.json при старте оркестратора
+- [ ] GET /api/voices возвращает список голосов
+- [ ] ml-service принимает voice_id и загружает нужную модель
+**Testing:** GET /api/voices → JSON со списком
+
+---
+
+### Шаг 9 — HuBERT + RVC ONNX inference
+**Статус:** не начат
+**Задача:** реальный пайплайн конвертации голоса через ONNX
+**Acceptance criteria:**
+- [ ] content-vec.onnx (HuBERT encoder) загружен и работает
+- [ ] RVC decoder .onnx файлы для 5+ голосов подключены
+- [ ] /convert использует HuBERT → RVC pipeline
+- [ ] SKILLS.md обновлён: RVC ONNX vs RVC Python lib
+**Testing:** /convert → WAV со слышимой сменой голоса
+
+---
+
+### Шаг 10 — UI redesign (голосовая галерея)
+**Статус:** не начат
+**Задача:** новый VoiceParams — карточки голосов, слайдеры возраст/высота/тембр
+**Acceptance criteria:**
+- [ ] Грид карточек голосов из /api/voices
+- [ ] Активная карточка выделена (border accent + fill)
+- [ ] Слайдер возраста с подписями (Ребёнок / Взрослый / Пожилой)
+- [ ] Тембр — 3 кнопки с визуальным акцентом
+**Testing:** UI открывается, выбор голоса меняет параметры конвертации
+
+---
+
+### Шаг 11 — Интеграционное тестирование
 **Статус:** не начат
 **Задача:** полный end-to-end тест всего пайплайна
 **Acceptance criteria:**
 - [ ] Файл из Adobe Audition проходит полный цикл
 - [ ] Запись с MV7i проходит полный цикл
-- [ ] Повторный рендер с другими параметрами работает
+- [ ] Повторный рендер с другим голосом работает
 - [ ] Удаление файлов и записей из БД работает корректно
 - [ ] Прогресс бар отображается корректно
 **Testing:** тест всех сценариев из UI
@@ -167,3 +218,4 @@
 | 4 | 2026-06-04 | C++ WORLD сервис :8002, MSVC 14.44.35207 (VS 2022 BuildTools), Harvest+StoneMask+CheapTrick+D4C+Synthesis, /health + /synthesize |
 | 5 | 2026-06-04 | React UI: Vite+Tailwind+wavesurfer+SignalR, FileDropZone, VoiceParams, WaveformPlayer, HistoryList; оркестратор +/history +/rerender +/audio/* |
 | 6 | 2026-06-04 | scripts/start.ps1: MSSQL check, запуск 4 сервисов, health polling, браузер, Ctrl+C shutdown |
+| 7 | 2026-06-04 | Pixi 0.70.1, pyproject.toml (conda-forge win-64), soundfile/libsndfile разблокирован, start.ps1 → pixi run |

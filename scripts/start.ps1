@@ -6,7 +6,7 @@ $ROOT = Split-Path $PSScriptRoot -Parent
 # --- Paths ---
 
 $WORLD_EXE  = "$ROOT\world-service\build\world-service.exe"
-$PYTHON_EXE = "$ROOT\ml-service\.venv\Scripts\python.exe"
+$PIXI_LOCK  = "$ROOT\ml-service\pixi.lock"
 $ML_DIR     = "$ROOT\ml-service"
 $ORC_DIR    = "$ROOT\orchestrator"
 $FE_DIR     = "$ROOT\frontend"
@@ -97,8 +97,9 @@ if (-not (Test-Path $WORLD_EXE)) {
     exit 1
 }
 
-if (-not (Test-Path $PYTHON_EXE)) {
-    Write-Fail "Python venv не найден: $PYTHON_EXE"
+if (-not (Test-Path $PIXI_LOCK)) {
+    Write-Fail "Pixi environment не установлен."
+    Write-Fail "Выполните: cd ml-service && pixi install"
     exit 1
 }
 
@@ -116,7 +117,7 @@ Write-Title "Запуск сервисов"
 try {
     Start-Svc "WORLD (:8002)" $WORLD_EXE "" "$ROOT\world-service\build"
 
-    Start-Svc "ML    (:8001)" $PYTHON_EXE "-m uvicorn main:app --host 0.0.0.0 --port 8001" $ML_DIR
+    Start-Svc "ML    (:8001)" "pixi" "run serve" $ML_DIR
 
     Start-Svc "Orch  (:5000)" "dotnet" "run --project orchestrator.csproj --urls http://0.0.0.0:5000" $ORC_DIR
 
