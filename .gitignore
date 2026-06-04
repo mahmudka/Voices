@@ -25,9 +25,11 @@ build/
 CMakeFiles/
 CMakeCache.txt
 
-# Audio temp files
-shared/audio/input/
-shared/audio/output/
+# Audio temp files — игнорировать только аудио файлы, не сами папки
+shared/audio/input/*.wav
+shared/audio/input/*.WAV
+shared/audio/output/*.wav
+shared/audio/output/*.WAV
 
 # Environment
 .env
@@ -40,3 +42,6 @@ Thumbs.db
 # IDE
 .idea/
 .vscode/settings.json
+
+# Claude Code local settings
+.claude/
