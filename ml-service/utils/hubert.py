@@ -35,17 +35,26 @@ def extract_features(
     if peak > 0:
         audio_16k = audio_16k / peak
 
-    # [1, samples]
-    inp = audio_16k.reshape(1, -1).astype(np.float32)
+    # ContentVec ONNX expects [batch=1, channel=1, samples]
+    inp = audio_16k.reshape(1, 1, -1).astype(np.float32)
 
-    input_name = session.get_inputs()[0].name
+    input_name  = session.get_inputs()[0].name
     output_name = session.get_outputs()[0].name
 
     result = session.run([output_name], {input_name: inp})[0]
 
     # Normalise to [n_frames, hidden_dim]
+    # Common output layouts:
+    #   [1, n_frames, hidden]  ← squeeze batch
+    #   [n_frames, 1, hidden]  ← squeeze middle
+    #   [hidden, n_frames]     ← transpose
     if result.ndim == 3:
-        result = result.squeeze(0)
+        if result.shape[0] == 1:
+            result = result.squeeze(0)            # → [n_frames, hidden]
+        elif result.shape[1] == 1:
+            result = result.squeeze(1)            # → [n_frames, hidden]
+    elif result.ndim == 2 and result.shape[0] < result.shape[1]:
+        result = result.T                          # → [n_frames, hidden]
 
     logger.debug("HuBERT features: %s", result.shape)
     return result.astype(np.float32)

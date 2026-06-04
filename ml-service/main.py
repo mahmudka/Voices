@@ -12,6 +12,7 @@ from utils.model import (
     get_hubert_session,
     get_placeholder_session,
     get_rvc_session,
+    get_voice_encoder_dim,
     run_placeholder,
 )
 
@@ -129,9 +130,11 @@ async def convert(
 def _rvc_available(voice_id: str | None) -> bool:
     if not voice_id:
         return False
-    hubert = get_hubert_session()
-    rvc = get_rvc_session(voice_id) if voice_id else None
-    return hubert is not None and rvc is not None
+    rvc = get_rvc_session(voice_id)
+    if rvc is None:
+        return False
+    dim = get_voice_encoder_dim(rvc)
+    return get_hubert_session(dim=dim) is not None
 
 
 def _morph_available(voice_id: str | None) -> bool:
@@ -161,11 +164,13 @@ async def _run_conversion(
       2. Spectral morph  — analytical formant-profile morphing (always available)
       3. Placeholder     — identity transform (fallback)
     """
-    # Tier 1: RVC
-    hubert_session = get_hubert_session()
+    # Tier 1: RVC (auto-select encoder dim from voice model)
     rvc_session = get_rvc_session(voice_id) if voice_id else None
-    if hubert_session is not None and rvc_session is not None:
-        return _run_rvc(audio, sr, f0_data, rvc_session, hubert_session)
+    if rvc_session is not None:
+        dim = get_voice_encoder_dim(rvc_session)
+        hubert_session = get_hubert_session(dim=dim)
+        if hubert_session is not None:
+            return _run_rvc(audio, sr, f0_data, rvc_session, hubert_session)
 
     # Tier 2: Spectral morphing
     if voice_id and _morph_available(voice_id):

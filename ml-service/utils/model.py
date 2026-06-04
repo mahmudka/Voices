@@ -13,7 +13,16 @@ MODELS_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "shared", "models")
 )
 VOICES_JSON = os.path.join(MODELS_DIR, "voices.json")
-HUBERT_PATH = os.path.join(MODELS_DIR, "content-vec-best.onnx")
+
+# RVC has two ContentVec encoder variants:
+#   v2 (768-dim) → most modern models
+#   v1 (256-dim) → older models
+HUBERT_PATHS = {
+    768: os.path.join(MODELS_DIR, "content-vec-best.onnx"),
+    256: os.path.join(MODELS_DIR, "content-vec-256.onnx"),
+}
+HUBERT_PATH = HUBERT_PATHS[768]  # back-compat default
+
 PLACEHOLDER_PATH = os.path.join(
     os.path.dirname(__file__), "..", "models", "voice_converter.onnx"
 )
@@ -61,16 +70,28 @@ def _open_session(path: str) -> ort.InferenceSession:
 # HuBERT / ContentVec session
 # ---------------------------------------------------------------------------
 
-def get_hubert_session() -> ort.InferenceSession | None:
-    """Return ContentVec encoder session, or None if model file is missing."""
-    key = "__hubert__"
+def get_hubert_session(dim: int = 768) -> ort.InferenceSession | None:
+    """
+    Return ContentVec encoder session for the requested embedding dimension.
+    dim=768 → RVC v2 (content-vec-best.onnx)
+    dim=256 → RVC v1 (content-vec-256.onnx)
+    """
+    path = HUBERT_PATHS.get(dim)
+    if path is None:
+        return None
+    key = f"__hubert_{dim}__"
     if key not in _sessions:
-        if not os.path.exists(HUBERT_PATH):
-            logger.warning("HuBERT model not found: %s", HUBERT_PATH)
+        if not os.path.exists(path):
+            logger.warning("HuBERT %d-dim not found: %s", dim, path)
             _sessions[key] = None  # type: ignore[assignment]
         else:
-            _sessions[key] = _open_session(HUBERT_PATH)
+            _sessions[key] = _open_session(path)
     return _sessions.get(key)
+
+
+def get_voice_encoder_dim(rvc_session: ort.InferenceSession) -> int:
+    """Read embedding dim required by the voice model (256 or 768)."""
+    return rvc_session.get_inputs()[0].shape[-1]
 
 
 # ---------------------------------------------------------------------------
