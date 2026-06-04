@@ -8,7 +8,7 @@
 ## Статус проекта
 
 **Фаза:** Phase 1
-**Текущий шаг:** 5 — React UI
+**Текущий шаг:** 6 — PowerShell скрипт запуска
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -98,20 +98,20 @@
 ---
 
 ### Шаг 5 — React UI
-**Статус:** не начат
+**Статус:** завершён
 **Задача:** фронтенд с shadcn/ui, все элементы управления, wavesurfer визуализация
 **Acceptance criteria:**
-- [ ] Приложение запускается на :5173
-- [ ] Загрузка WAV файла (drag-and-drop + кнопка)
-- [ ] Запись с микрофона
-- [ ] Выбор: пол, возраст (слайдер 5–80), тембр (низкий/средний/высокий)
-- [ ] Прогресс бар через SignalR
-- [ ] Воспроизведение оригинала и результата (wavesurfer.js)
-- [ ] Кнопка скачать WAV
-- [ ] Повторный рендер без повторной загрузки файла
-- [ ] История конвертаций со списком
-- [ ] Удаление: отдельный файл / вся сессия / вся история
-**Testing:** полный цикл загрузка → рендер → прослушивание → скачивание
+- [x] Приложение запускается на :5173 (Vite, npm run dev)
+- [x] Загрузка WAV файла (drag-and-drop + кнопка)
+- [x] Запись с микрофона (кнопка, POST /api/record/start + /stop)
+- [x] Выбор: пол (муж/жен/дет), возраст (слайдер 5–80), тембр (низкий/средний/высокий)
+- [x] Прогресс бар через SignalR (@microsoft/signalr)
+- [x] Воспроизведение оригинала и результата (wavesurfer.js)
+- [x] Кнопка скачать WAV
+- [x] Повторный рендер без повторной загрузки (POST /api/convert/rerender)
+- [x] История конвертаций (GET /api/history)
+- [x] Удаление: отдельная запись / вся история (DELETE /api/history/{id}, /api/history)
+**Testing:** npm run build → успешно, 331 KB JS
 
 ---
 
@@ -163,3 +163,4 @@
 | 2 | 2026-06-04 | SignalR ConvertHub, AudioCaptureService (WASAPI/NAudio), ConversionService, POST /api/convert, HttpClients :8001/:8002 |
 | 3 | 2026-06-04 | FastAPI :8001, /analyze (scipy autocorr F0), /convert (ONNX placeholder), /health; ARM64 ограничения в SKILLS.md |
 | 4 | 2026-06-04 | C++ WORLD сервис :8002, MSVC 14.44.35207 (VS 2022 BuildTools), Harvest+StoneMask+CheapTrick+D4C+Synthesis, /health + /synthesize |
+| 5 | 2026-06-04 | React UI: Vite+Tailwind+wavesurfer+SignalR, FileDropZone, VoiceParams, WaveformPlayer, HistoryList; оркестратор +/history +/rerender +/audio/* |

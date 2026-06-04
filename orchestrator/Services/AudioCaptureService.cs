@@ -10,6 +10,8 @@ public class AudioCaptureService : IDisposable
     private string? _currentOutputPath;
     private bool _disposed;
 
+    public string? CurrentSessionId { get; private set; }
+
     public IReadOnlyList<(string Id, string Name)> GetInputDevices()
     {
         using var enumerator = new MMDeviceEnumerator();
@@ -19,7 +21,7 @@ public class AudioCaptureService : IDisposable
             .ToList();
     }
 
-    public void StartRecording(string outputPath)
+    public void StartRecording(string outputPath, string sessionId)
     {
         if (_capture is not null)
             throw new InvalidOperationException("Recording already in progress.");
@@ -31,6 +33,7 @@ public class AudioCaptureService : IDisposable
             : new WasapiCapture();
 
         _currentOutputPath = outputPath;
+        CurrentSessionId = sessionId;
         _writer = new WaveFileWriter(outputPath, _capture.WaveFormat);
 
         _capture.DataAvailable += OnDataAvailable;
@@ -44,7 +47,7 @@ public class AudioCaptureService : IDisposable
             throw new InvalidOperationException("No recording in progress.");
 
         _capture.StopRecording();
-
+        CurrentSessionId = null;
         return _currentOutputPath;
     }
 
