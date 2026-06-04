@@ -13,25 +13,22 @@ from utils.model import get_session, run_inference
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "voice_converter.onnx")
-
 app = FastAPI(title="ML Service", version="1.0.0")
 
 
 @app.on_event("startup")
 async def startup():
-    logger.info("Loading ONNX model...")
-    get_session(MODEL_PATH)
+    logger.info("Loading default ONNX model...")
+    get_session()
     logger.info("ML service ready on :8001")
 
 
 @app.get("/health")
 def health():
-    session = get_session(MODEL_PATH)
+    session = get_session()
     return {
         "status": "ok",
         "providers": session.get_providers(),
-        "model": os.path.basename(MODEL_PATH),
     }
 
 
@@ -55,6 +52,7 @@ async def analyze(file: UploadFile = File(...)):
 async def convert(
     file: UploadFile = File(...),
     f0: str = Form(...),
+    voice_id: str | None = Form(default=None),
     voice_type: str = Form(...),
     age: int = Form(...),
     timbre: str = Form(...),
@@ -74,7 +72,7 @@ async def convert(
     except json.JSONDecodeError as e:
         raise HTTPException(422, f"Invalid F0 JSON: {e}")
 
-    session = get_session(MODEL_PATH)
+    session = get_session(voice_id)
 
     try:
         processed = run_inference(session, audio)
@@ -88,6 +86,7 @@ async def convert(
         content=out_bytes,
         media_type="audio/wav",
         headers={
+            "X-Session-VoiceId": voice_id or "",
             "X-Session-VoiceType": voice_type,
             "X-Session-Age": str(age),
             "X-Session-Timbre": timbre,

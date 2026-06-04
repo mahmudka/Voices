@@ -21,6 +21,9 @@ public class Conversion
     [MaxLength(500)]
     public string? OutputPath { get; set; }
 
+    [MaxLength(50)]
+    public string? VoiceId { get; set; }
+
     [Required, MaxLength(20)]
     public string VoiceType { get; set; } = string.Empty;
 

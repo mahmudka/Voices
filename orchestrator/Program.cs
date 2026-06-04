@@ -17,6 +17,7 @@ builder.Services.AddHttpClient("WorldService", c =>
     c.BaseAddress = new Uri(builder.Configuration["Services:WorldServiceUrl"]!));
 
 builder.Services.AddScoped<ConversionService>();
+builder.Services.AddScoped<VoiceSeeder>();
 builder.Services.AddSingleton<AudioCaptureService>();
 
 builder.Services.AddControllersWithViews();
@@ -29,6 +30,15 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
      .AllowCredentials()));
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+
+    var seeder = scope.ServiceProvider.GetRequiredService<VoiceSeeder>();
+    await seeder.SeedAsync();
+}
 
 if (!app.Environment.IsDevelopment())
 {

@@ -1,0 +1,76 @@
+{
+  "voices": [
+    {
+      "voiceId": "male_neutral",
+      "name": "Нейтральный мужской",
+      "gender": "male",
+      "description": "Чистый мужской голос, диктор",
+      "icon": "M",
+      "modelFile": "male_neutral.onnx",
+      "defaultAge": 35,
+      "defaultTimbre": "medium",
+      "ageMin": 18,
+      "ageMax": 70
+    },
+    {
+      "voiceId": "male_deep",
+      "name": "Глубокий мужской",
+      "gender": "male",
+      "description": "Низкий бархатный голос",
+      "icon": "M",
+      "modelFile": "male_deep.onnx",
+      "defaultAge": 40,
+      "defaultTimbre": "low",
+      "ageMin": 25,
+      "ageMax": 65
+    },
+    {
+      "voiceId": "male_elder",
+      "name": "Пожилой мужской",
+      "gender": "male",
+      "description": "Зрелый мужской голос",
+      "icon": "M",
+      "modelFile": "male_elder.onnx",
+      "defaultAge": 65,
+      "defaultTimbre": "medium",
+      "ageMin": 50,
+      "ageMax": 80
+    },
+    {
+      "voiceId": "female_neutral",
+      "name": "Нейтральный женский",
+      "gender": "female",
+      "description": "Чистый женский голос, диктор",
+      "icon": "F",
+      "modelFile": "female_neutral.onnx",
+      "defaultAge": 30,
+      "defaultTimbre": "medium",
+      "ageMin": 18,
+      "ageMax": 60
+    },
+    {
+      "voiceId": "female_soft",
+      "name": "Мягкий женский",
+      "gender": "female",
+      "description": "Тёплый, мягкий женский голос",
+      "icon": "F",
+      "modelFile": "female_soft.onnx",
+      "defaultAge": 28,
+      "defaultTimbre": "medium",
+      "ageMin": 18,
+      "ageMax": 55
+    },
+    {
+      "voiceId": "child",
+      "name": "Детский",
+      "gender": "child",
+      "description": "Детский голос",
+      "icon": "C",
+      "modelFile": "child.onnx",
+      "defaultAge": 10,
+      "defaultTimbre": "high",
+      "ageMin": 5,
+      "ageMax": 17
+    }
+  ]
+}

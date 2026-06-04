@@ -8,7 +8,7 @@
 ## Статус проекта
 
 **Фаза:** Phase 1
-**Текущий шаг:** 8 — Voice library (бэкенд)
+**Текущий шаг:** 9 — HuBERT + RVC ONNX inference
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -145,7 +145,7 @@
 ---
 
 ### Шаг 8 — Voice library (бэкенд)
-**Статус:** не начат
+**Статус:** завершён
 **Задача:** структура библиотеки голосов, API, БД
 **Acceptance criteria:**
 - [ ] shared/models/ создана, voices.json с каталогом голосов
@@ -219,3 +219,4 @@
 | 5 | 2026-06-04 | React UI: Vite+Tailwind+wavesurfer+SignalR, FileDropZone, VoiceParams, WaveformPlayer, HistoryList; оркестратор +/history +/rerender +/audio/* |
 | 6 | 2026-06-04 | scripts/start.ps1: MSSQL check, запуск 4 сервисов, health polling, браузер, Ctrl+C shutdown |
 | 7 | 2026-06-04 | Pixi 0.70.1, pyproject.toml (conda-forge win-64), soundfile/libsndfile разблокирован, start.ps1 → pixi run |
+| 8 | 2026-06-04 | VoicePreset переработан, voices.json (6 голосов), EF миграция VoiceLibrary, GET /api/voices, VoiceSeeder, ml-service voice_id routing |

@@ -17,5 +17,10 @@ public class AppDbContext : DbContext
             e.HasIndex(c => c.SessionId);
             e.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
         });
+
+        modelBuilder.Entity<VoicePreset>(e =>
+        {
+            e.HasIndex(v => v.VoiceId).IsUnique();
+        });
     }
 }

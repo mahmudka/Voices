@@ -14,7 +14,7 @@ public class ConversionService(
 {
     public async Task ProcessAsync(
         string sessionId, string inputPath,
-        string voiceType, int age, string timbre)
+        string? voiceId, string voiceType, int age, string timbre)
     {
         try
         {
@@ -24,7 +24,7 @@ public class ConversionService(
 
             await SendProgress(sessionId, 40, "Конвертация тембра...");
 
-            var convertedPath = await ConvertTimbreAsync(inputPath, f0Result, voiceType, age, timbre);
+            var convertedPath = await ConvertTimbreAsync(inputPath, f0Result, voiceId, voiceType, age, timbre);
 
             await SendProgress(sessionId, 70, "Синтез...");
 
@@ -60,13 +60,15 @@ public class ConversionService(
     }
 
     private async Task<string> ConvertTimbreAsync(
-        string inputPath, string f0Json, string voiceType, int age, string timbre)
+        string inputPath, string f0Json, string? voiceId, string voiceType, int age, string timbre)
     {
         using var client = httpFactory.CreateClient("MlService");
         using var form = new MultipartFormDataContent();
 
         form.Add(new StreamContent(File.OpenRead(inputPath)), "file", Path.GetFileName(inputPath));
         form.Add(new StringContent(f0Json), "f0");
+        if (!string.IsNullOrEmpty(voiceId))
+            form.Add(new StringContent(voiceId), "voice_id");
         form.Add(new StringContent(voiceType), "voice_type");
         form.Add(new StringContent(age.ToString()), "age");
         form.Add(new StringContent(timbre), "timbre");

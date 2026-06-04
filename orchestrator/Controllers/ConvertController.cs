@@ -46,6 +46,7 @@ public class ConvertController(
             SessionId = sessionId,
             InputFile = inputFile,
             InputPath = inputPath,
+            VoiceId = request.VoiceId,
             VoiceType = request.VoiceType,
             Age = request.Age,
             Timbre = request.Timbre,
@@ -53,7 +54,7 @@ public class ConvertController(
         db.Conversions.Add(conversion);
         await db.SaveChangesAsync();
 
-        FireAndForget(sessionId, inputPath, request.VoiceType, request.Age, request.Timbre);
+        FireAndForget(sessionId, inputPath, request.VoiceId, request.VoiceType, request.Age, request.Timbre);
 
         return Ok(new { sessionId, status = "processing" });
     }
@@ -77,6 +78,7 @@ public class ConvertController(
             SessionId = request.SessionId,
             InputFile = existing.InputFile,
             InputPath = existing.InputPath,
+            VoiceId = request.VoiceId,
             VoiceType = request.VoiceType,
             Age = request.Age,
             Timbre = request.Timbre,
@@ -84,7 +86,7 @@ public class ConvertController(
         db.Conversions.Add(conversion);
         await db.SaveChangesAsync();
 
-        FireAndForget(request.SessionId, existing.InputPath, request.VoiceType, request.Age, request.Timbre);
+        FireAndForget(request.SessionId, existing.InputPath, request.VoiceId, request.VoiceType, request.Age, request.Timbre);
 
         return Ok(new { sessionId = request.SessionId, status = "processing" });
     }
@@ -124,6 +126,7 @@ public class ConvertController(
             SessionId = sessionId,
             InputFile = inputFile,
             InputPath = inputPath,
+            VoiceId = request.VoiceId,
             VoiceType = request.VoiceType,
             Age = request.Age,
             Timbre = request.Timbre,
@@ -131,7 +134,7 @@ public class ConvertController(
         db.Conversions.Add(conversion);
         await db.SaveChangesAsync();
 
-        FireAndForget(sessionId, inputPath, request.VoiceType, request.Age, request.Timbre);
+        FireAndForget(sessionId, inputPath, request.VoiceId, request.VoiceType, request.Age, request.Timbre);
 
         return Ok(new { sessionId, inputFile, status = "processing" });
     }
@@ -141,6 +144,23 @@ public class ConvertController(
     {
         var devices = capture.GetInputDevices().Select(d => new { d.Id, d.Name });
         return Ok(devices);
+    }
+
+    // ── Voices ───────────────────────────────────────────────────────────────
+
+    [HttpGet("voices")]
+    public async Task<IActionResult> GetVoices()
+    {
+        var voices = await db.VoicePresets
+            .OrderBy(v => v.Gender)
+            .ThenBy(v => v.Name)
+            .Select(v => new
+            {
+                v.VoiceId, v.Name, v.Gender, v.Description, v.Icon,
+                v.DefaultAge, v.DefaultTimbre, v.AgeMin, v.AgeMax,
+            })
+            .ToListAsync();
+        return Ok(voices);
     }
 
     // ── History ───────────────────────────────────────────────────────────────
@@ -227,17 +247,17 @@ public class ConvertController(
         }
     }
 
-    private void FireAndForget(string sessionId, string inputPath, string voiceType, int age, string timbre)
+    private void FireAndForget(string sessionId, string inputPath, string? voiceId, string voiceType, int age, string timbre)
     {
         _ = Task.Run(async () =>
         {
             await using var scope = scopeFactory.CreateAsyncScope();
             var svc = scope.ServiceProvider.GetRequiredService<ConversionService>();
-            await svc.ProcessAsync(sessionId, inputPath, voiceType, age, timbre);
+            await svc.ProcessAsync(sessionId, inputPath, voiceId, voiceType, age, timbre);
         });
     }
 }
 
-public record ConvertRequest(IFormFile? File, string VoiceType, int Age, string Timbre);
-public record RerenderRequest(string SessionId, string VoiceType, int Age, string Timbre);
-public record RecordStopRequest(string VoiceType, int Age, string Timbre);
+public record ConvertRequest(IFormFile? File, string? VoiceId, string VoiceType, int Age, string Timbre);
+public record RerenderRequest(string SessionId, string? VoiceId, string VoiceType, int Age, string Timbre);
+public record RecordStopRequest(string? VoiceId, string VoiceType, int Age, string Timbre);
