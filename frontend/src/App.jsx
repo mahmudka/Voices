@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Mic, MicOff, RefreshCw } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Mic, MicOff, RefreshCw, Moon, Sun } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -16,34 +16,56 @@ import {
   startRecording, stopRecording,
 } from '@/lib/api'
 import { ensureConnected } from '@/lib/signalr'
+import { cn } from '@/lib/utils'
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+
+function useTheme() {
+  const [dark, setDark] = useState(() =>
+    document.documentElement.classList.contains('dark') ||
+    localStorage.getItem('theme') === 'dark'
+  )
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+    localStorage.setItem('theme', dark ? 'dark' : 'light')
+  }, [dark])
+  return [dark, setDark]
+}
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const DEFAULT_PARAMS = { voiceId: null, voiceType: 'male', age: 35, timbre: 'medium' }
 
+// ── App ───────────────────────────────────────────────────────────────────────
+
 export default function App() {
+  const [dark, setDark] = useTheme()
+
   const [voices, setVoices] = useState([])
   const [params, setParams] = useState(DEFAULT_PARAMS)
 
-  const [file, setFile] = useState(null)
-  const [inputUrl, setInputUrl] = useState(null)
-  const [outputUrl, setOutputUrl] = useState(null)
+  const [file,       setFile]       = useState(null)
+  const [inputUrl,   setInputUrl]   = useState(null)
+  const [outputUrl,  setOutputUrl]  = useState(null)
   const [outputFile, setOutputFile] = useState(null)
-  const [sessionId, setSessionId] = useState(null)
+  const [sessionId,  setSessionId]  = useState(null)
 
-  const [status, setStatus] = useState('idle')
+  const [status,   setStatus]   = useState('idle')      // idle | converting | done | error
   const [progress, setProgress] = useState(0)
-  const [stage, setStage] = useState('')
-  const [error, setError] = useState(null)
+  const [stage,    setStage]    = useState('')
+  const [error,    setError]    = useState(null)
 
-  const [recording, setRecording] = useState(false)
-  const [history, setHistory] = useState([])
+  // btn flash: null | 'success' | 'error'
+  const [convertFlash, setConvertFlash] = useState(null)
+
+  const [recording,     setRecording]     = useState(false)
+  const [history,       setHistory]       = useState([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
 
-  // Load voices catalog
-  useEffect(() => {
-    fetchVoices().then(setVoices).catch(() => {})
-  }, [])
+  // ── Init ────────────────────────────────────────────────────────────────────
 
-  // Load history
+  useEffect(() => { fetchVoices().then(setVoices).catch(() => {}) }, [])
+
   useEffect(() => {
     fetchHistory()
       .then(setHistory)
@@ -51,7 +73,8 @@ export default function App() {
       .finally(() => setHistoryLoaded(true))
   }, [])
 
-  // SignalR setup
+  // ── SignalR ─────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     let conn
     ensureConnected().then(c => {
@@ -66,14 +89,17 @@ export default function App() {
         setStatus('done')
         setProgress(100)
         setStage('Готово')
+        setConvertFlash('success')
+        setTimeout(() => setConvertFlash(null), 1000)
         fetchHistory().then(setHistory).catch(() => {})
       })
       c.on('ConversionFailed', (_sid, err) => {
         setError(err)
         setStatus('error')
+        setConvertFlash('error')
+        setTimeout(() => setConvertFlash(null), 1000)
       })
     }).catch(() => {})
-
     return () => {
       conn?.off?.('ProgressUpdated')
       conn?.off?.('ConversionCompleted')
@@ -81,7 +107,6 @@ export default function App() {
     }
   }, [])
 
-  // Join/leave SignalR session group
   useEffect(() => {
     if (!sessionId) return
     ensureConnected().then(c => c.invoke('JoinSession', sessionId)).catch(() => {})
@@ -90,18 +115,11 @@ export default function App() {
     }
   }, [sessionId])
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Helpers ─────────────────────────────────────────────────────────────────
 
   function reset() {
-    setFile(null)
-    setInputUrl(null)
-    setOutputUrl(null)
-    setOutputFile(null)
-    setSessionId(null)
-    setStatus('idle')
-    setProgress(0)
-    setStage('')
-    setError(null)
+    setFile(null); setInputUrl(null); setOutputUrl(null); setOutputFile(null)
+    setSessionId(null); setStatus('idle'); setProgress(0); setStage(''); setError(null)
   }
 
   function handleFile(f) {
@@ -112,45 +130,37 @@ export default function App() {
 
   function handleVoiceSelect(voice) {
     setParams({
-      voiceId:      voice.voiceId,
-      voiceType:    voice.gender,
-      age:          voice.defaultAge,
-      timbre:       voice.defaultTimbre,
+      voiceId:   voice.voiceId,
+      voiceType: voice.gender,
+      age:       voice.defaultAge,
+      timbre:    voice.defaultTimbre,
     })
   }
 
-  // ── Convert / Record ──────────────────────────────────────────────────────
+  // ── Actions ─────────────────────────────────────────────────────────────────
 
   async function handleConvert() {
     if (!file) return
-    setStatus('converting')
-    setProgress(0)
-    setStage('Загрузка...')
-    setError(null)
-    setOutputUrl(null)
-    setOutputFile(null)
+    setStatus('converting'); setProgress(0); setStage('Загрузка...')
+    setError(null); setOutputUrl(null); setOutputFile(null)
     try {
       const data = await uploadAndConvert(file, params)
       setSessionId(data.sessionId)
     } catch (e) {
-      setError(e.message)
-      setStatus('error')
+      setError(e.message); setStatus('error')
+      setConvertFlash('error')
+      setTimeout(() => setConvertFlash(null), 1000)
     }
   }
 
   async function handleRerender() {
     if (!sessionId) return
-    setStatus('converting')
-    setProgress(0)
-    setStage('Повторный рендер...')
-    setError(null)
-    setOutputUrl(null)
-    setOutputFile(null)
+    setStatus('converting'); setProgress(0); setStage('Повторный рендер...')
+    setError(null); setOutputUrl(null); setOutputFile(null)
     try {
       await rerender(sessionId, params)
     } catch (e) {
-      setError(e.message)
-      setStatus('error')
+      setError(e.message); setStatus('error')
     }
   }
 
@@ -159,42 +169,31 @@ export default function App() {
       setRecording(false)
       try {
         const data = await stopRecording({
-          voiceId:   params.voiceId,
-          voiceType: params.voiceType,
-          age:       params.age,
-          timbre:    params.timbre,
+          voiceId: params.voiceId, voiceType: params.voiceType,
+          age: params.age, timbre: params.timbre,
         })
         setSessionId(data.sessionId)
         setInputUrl(`/api/audio/input/${encodeURIComponent(data.inputFile)}`)
         setFile({ name: data.inputFile })
-        setStatus('converting')
-        setProgress(0)
-        setStage('Запись обрабатывается...')
-      } catch (e) {
-        setError(e.message)
-        setStatus('error')
-      }
+        setStatus('converting'); setProgress(0); setStage('Запись обрабатывается...')
+      } catch (e) { setError(e.message); setStatus('error') }
     } else {
       try {
         reset()
         const data = await startRecording()
         setSessionId(data.sessionId)
         setRecording(true)
-      } catch (e) {
-        setError(e.message)
-      }
+      } catch (e) { setError(e.message) }
     }
   }
 
-  // ── History ───────────────────────────────────────────────────────────────
+  // ── History ─────────────────────────────────────────────────────────────────
 
   function handleSelectHistory(item) {
     setSessionId(item.sessionId)
     setParams({
-      voiceId:   item.voiceId ?? null,
-      voiceType: item.voiceType,
-      age:       item.age,
-      timbre:    item.timbre,
+      voiceId: item.voiceId ?? null, voiceType: item.voiceType,
+      age: item.age, timbre: item.timbre,
     })
     setFile({ name: item.inputFile })
     setInputUrl(item.inputPath ? `/api/audio/input/${encodeURIComponent(item.inputFile)}` : null)
@@ -217,35 +216,55 @@ export default function App() {
     reset()
   }
 
-  // ── Derived ───────────────────────────────────────────────────────────────
+  // ── Derived ─────────────────────────────────────────────────────────────────
 
-  const busy = status === 'converting' || recording
-
+  const busy          = status === 'converting' || recording
   const selectedVoice = voices.find(v => v.voiceId === params.voiceId)
-  const ageMin = selectedVoice?.ageMin ?? 5
-  const ageMax = selectedVoice?.ageMax ?? 80
+  const ageMin        = selectedVoice?.ageMin ?? 5
+  const ageMax        = selectedVoice?.ageMax ?? 80
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const convertLabel = status === 'converting' ? 'Конвертирую...' : 'Конвертировать'
+  const convertVariant =
+    convertFlash === 'success' ? 'success' :
+    convertFlash === 'error'   ? 'destructive' :
+    'default'
+
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8 transition-colors duration-300">
       <div className="mx-auto max-w-5xl space-y-6">
 
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Voice Converter</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Конвертация голоса · WORLD вокодер + RVC ONNX
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Voice Converter</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Конвертация голоса · Spectral Morph + RVC ONNX
+            </p>
+          </div>
+
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => setDark(d => !d)}
+            className="mt-1 shrink-0"
+            title={dark ? 'Светлая тема' : 'Тёмная тема'}
+          >
+            {dark
+              ? <Sun  className="h-4 w-4" />
+              : <Moon className="h-4 w-4" />
+            }
+          </Button>
         </div>
 
-        {/* Voice Gallery — full width */}
+        {/* Voice Gallery */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">
               Выберите голос
               {params.voiceId && (
-                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                <span className="ml-2 text-sm font-normal text-muted-foreground animate-fade-in-up">
                   · {selectedVoice?.name}
                 </span>
               )}
@@ -261,16 +280,20 @@ export default function App() {
           </CardContent>
         </Card>
 
-        {/* Two-column layout */}
+        {/* Two-column */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_300px]">
 
-          {/* ── Left column ── */}
+          {/* Left */}
           <div className="space-y-4">
 
             <Card>
               <CardHeader><CardTitle className="text-base">Исходное аудио</CardTitle></CardHeader>
               <CardContent className="space-y-3">
-                <FileDropZone onFile={handleFile} disabled={busy} />
+                <FileDropZone
+                  onFile={handleFile}
+                  disabled={busy}
+                  hasFile={!!file}
+                />
                 <Button
                   variant={recording ? 'destructive' : 'outline'}
                   onClick={handleRecord}
@@ -278,39 +301,54 @@ export default function App() {
                   className="w-full"
                 >
                   {recording
-                    ? <><MicOff className="h-4 w-4 mr-2" />Остановить запись</>
-                    : <><Mic className="h-4 w-4 mr-2" />Записать с микрофона (Shure MV7i)</>
+                    ? <><MicOff className="h-4 w-4" />Остановить запись</>
+                    : <><Mic    className="h-4 w-4" />Записать с микрофона</>
                   }
                 </Button>
                 {file && (
-                  <p className="text-xs text-muted-foreground truncate">{file.name}</p>
+                  <p className="text-xs text-muted-foreground truncate animate-fade-in-up">
+                    {file.name}
+                  </p>
                 )}
                 {inputUrl && <WaveformPlayer url={inputUrl} label="Оригинал" />}
               </CardContent>
             </Card>
 
+            {/* Progress */}
             {status === 'converting' && (
-              <Card>
+              <Card className="animate-scale-in">
                 <CardContent className="pt-6 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{stage || 'Обработка...'}</span>
-                    <span className="font-medium">{progress}%</span>
+                    <span
+                      className="text-muted-foreground animate-fade-in-up"
+                      key={stage}
+                    >
+                      {stage || 'Обработка...'}
+                    </span>
+                    <span className="font-medium tabular-nums">{progress}%</span>
                   </div>
-                  <Progress value={progress} />
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-full rounded-full progress-shimmer transition-all duration-500"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             )}
 
+            {/* Error */}
             {status === 'error' && error && (
-              <Card className="border-destructive/50">
+              <Card className="border-destructive/50 animate-scale-in">
                 <CardContent className="pt-6">
                   <p className="text-sm text-destructive">{error}</p>
                 </CardContent>
               </Card>
             )}
 
+            {/* Output */}
             {outputUrl && (
-              <Card>
+              <Card className="animate-scale-in">
                 <CardHeader><CardTitle className="text-base">Результат</CardTitle></CardHeader>
                 <CardContent>
                   <WaveformPlayer
@@ -324,7 +362,7 @@ export default function App() {
 
           </div>
 
-          {/* ── Right column ── */}
+          {/* Right */}
           <div className="space-y-4">
 
             <Card>
@@ -343,16 +381,22 @@ export default function App() {
             <div className="space-y-2">
               <Button
                 className="w-full"
+                variant={convertVariant}
                 onClick={handleConvert}
                 disabled={!file || busy || !params.voiceId}
               >
-                {status === 'converting' ? 'Конвертирую...' : 'Конвертировать'}
+                {status === 'converting'
+                  ? <><span className="spinner" />{convertLabel}</>
+                  : convertLabel
+                }
               </Button>
+
               {!params.voiceId && !busy && (
-                <p className="text-xs text-center text-muted-foreground">
+                <p className="text-xs text-center text-muted-foreground animate-fade-in-up">
                   Выберите голос выше
                 </p>
               )}
+
               {sessionId && (status === 'done' || status === 'error') && (
                 <Button
                   variant="outline"
@@ -360,7 +404,7 @@ export default function App() {
                   onClick={handleRerender}
                   disabled={busy}
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                  <RefreshCw className="h-4 w-4" />
                   Рендер с новыми параметрами
                 </Button>
               )}

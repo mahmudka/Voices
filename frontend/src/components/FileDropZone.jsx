@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { Upload } from 'lucide-react'
+import { Upload, CheckCircle2 } from 'lucide-react'
 
-export function FileDropZone({ onFile, disabled }) {
+export function FileDropZone({ onFile, disabled, hasFile }) {
   const inputRef = useRef(null)
   const [dragging, setDragging] = useState(false)
 
@@ -26,17 +26,43 @@ export function FileDropZone({ onFile, disabled }) {
       onDrop={handleDrop}
       onClick={() => !disabled && inputRef.current?.click()}
       className={cn(
-        'flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 cursor-pointer transition-colors',
-        dragging && !disabled ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
-        disabled && 'opacity-50 cursor-not-allowed'
+        'relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-7',
+        'cursor-pointer select-none transition-all duration-200 ease-out',
+        dragging && !disabled
+          ? 'border-primary bg-primary/8 scale-[1.01]'
+          : hasFile
+            ? 'border-[hsl(var(--success)/0.6)] bg-[hsl(var(--success)/0.05)]'
+            : 'border-border hover:border-primary/50 hover:bg-muted/40',
+        disabled && 'opacity-50 cursor-not-allowed',
       )}
     >
-      <Upload className="h-8 w-8 text-muted-foreground" />
-      <div className="text-center">
-        <p className="text-sm font-medium">Перетащите WAV файл</p>
-        <p className="text-xs text-muted-foreground">или нажмите для выбора</p>
+      <div className={cn(
+        'rounded-full p-2 transition-all duration-200',
+        hasFile ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' : 'bg-muted text-muted-foreground',
+        dragging && !disabled && 'bg-primary/15 text-primary scale-110',
+      )}>
+        {hasFile
+          ? <CheckCircle2 className="h-6 w-6" />
+          : <Upload className="h-6 w-6" />
+        }
       </div>
-      <input ref={inputRef} type="file" accept=".wav,audio/wav" className="hidden" onChange={handleChange} />
+
+      <div className="text-center">
+        <p className="text-sm font-medium">
+          {hasFile ? 'Файл загружен' : 'Перетащите WAV файл'}
+        </p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {hasFile ? 'нажмите для замены' : 'или нажмите для выбора'}
+        </p>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".wav,audio/wav"
+        className="hidden"
+        onChange={handleChange}
+      />
     </div>
   )
 }

@@ -8,7 +8,7 @@
 ## Статус проекта
 
 **Фаза:** Phase 1 (продолжение)
-**Текущий шаг:** 13 — UI redesign (Claude Design)
+**Текущий шаг:** 13 — завершён
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -263,4 +263,4 @@
 | 10 | 2026-06-04 | VoiceGallery (грид карточек), VoiceParams (age+timbre), App.jsx restructure, api.js fetchVoices/voiceId, build 327KB |
 | 11 | 2026-06-04 | E2E тесты всех endpoint'ов; фикс: промежуточный _converted.wav утекал в input/; voiceId добавлен в GET /api/history |
 | 12 | 2026-06-04 | Spectral morphing Path B: utils/spectral_morph.py (6 аналитических профилей, STFT+кепстр), 3-уровневый routing в main.py |
-| 13 | — | UI redesign (Claude Design): кнопки с цветом, анимации, тёмная тема |
+| 13 | 2026-06-04 | UI redesign: тёплая палитра, active:scale кнопки, glow по полу, shimmer progress, dark/light toggle, fade-in анимации |
