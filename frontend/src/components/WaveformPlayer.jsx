@@ -34,7 +34,7 @@ export function WaveformPlayer({ url, label, downloadName }) {
       normalize:     true,
     })
 
-    ws.load(url)
+    ws.load(url).catch(() => {})
     ws.on('ready',  () => setReady(true))
     ws.on('finish', () => setPlaying(false))
     wsRef.current = ws

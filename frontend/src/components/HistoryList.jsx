@@ -39,12 +39,14 @@ export function HistoryList({ items, onDelete, onDeleteAll, onSelect }) {
               </div>
             </button>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              {item.outputPath && (
-                <Button size="icon" variant="ghost" asChild>
-                  <a href={audioUrl(item.outputPath)} download={item.outputFile ?? 'output.wav'}>
-                    <Play className="h-3.5 w-3.5" />
-                  </a>
-                </Button>
+              {item.outputFile && (
+                <button
+                  onClick={() => onSelect(item)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-md text-sm transition-all duration-150 active:scale-[0.96] hover:bg-accent hover:text-accent-foreground"
+                  title="Загрузить в плеер"
+                >
+                  <Play className="h-3.5 w-3.5" />
+                </button>
               )}
               <Button
                 size="icon"
