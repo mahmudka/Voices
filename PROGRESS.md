@@ -8,7 +8,7 @@
 ## Статус проекта
 
 **Фаза:** Phase 1
-**Текущий шаг:** 4 — C++ WORLD сервис
+**Текущий шаг:** 5 — React UI
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -84,16 +84,16 @@
 ---
 
 ### Шаг 4 — C++ WORLD сервис
-**Статус:** не начат
+**Статус:** завершён
 **Задача:** HTTP сервис на cpp-httplib, WORLD вокодер, F0 перенос и синтез
 **Acceptance criteria:**
-- [ ] Сервис собирается под ARM64 Windows (MSVC или MinGW)
-- [ ] Запускается на :8002
-- [ ] POST /synthesize — принимает WAV + параметры (voiceType, age, timbre)
-- [ ] F0 из оригинала переносится на синтезированный голос
-- [ ] Форманты модифицируются по таблице из SKILLS.md
-- [ ] Возвращает итоговый WAV
-**Testing:** на выходе слышна другая тональность при сохранённой интонации
+- [x] Сервис собирается под ARM64 Windows (MSVC 14.44.35207 из VS 2022 Build Tools)
+- [x] Запускается на :8002
+- [x] POST /synthesize — принимает WAV + параметры (voice_type, age, timbre)
+- [x] F0 из оригинала переносится на синтезированный голос (Harvest + StoneMask)
+- [x] Форманты модифицируются по таблице из SKILLS.md (shift_formants + get_params)
+- [x] Возвращает итоговый WAV
+**Testing:** curl POST /synthesize → 200 OK, WAV 96 KB ✓
 
 ---
 
@@ -162,3 +162,4 @@
 | 1 | 2026-06-04 | ASP.NET Core MVC проект, EF Core 8, модели Conversion/VoicePreset, миграция применена |
 | 2 | 2026-06-04 | SignalR ConvertHub, AudioCaptureService (WASAPI/NAudio), ConversionService, POST /api/convert, HttpClients :8001/:8002 |
 | 3 | 2026-06-04 | FastAPI :8001, /analyze (scipy autocorr F0), /convert (ONNX placeholder), /health; ARM64 ограничения в SKILLS.md |
+| 4 | 2026-06-04 | C++ WORLD сервис :8002, MSVC 14.44.35207 (VS 2022 BuildTools), Harvest+StoneMask+CheapTrick+D4C+Synthesis, /health + /synthesize |

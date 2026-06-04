@@ -61,6 +61,14 @@
 | cpp-httplib | HTTP сервер для C++ сервиса |
 | CMake 3.20+ | сборка |
 
+#### Сборка C++ на ARM64 Windows
+- Компилятор: MSVC 14.44.35207 из VS 2022 BuildTools (путь: `C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools`)
+- VS Insiders 18 не подходит — нет папки `include` (C++ заголовки не установлены в preview-версии)
+- Обязательно устанавливать `INCLUDE` и `LIB` env vars вручную перед cmake (VsDevCmd.bat не добавляет MSVC headers)
+- `_WIN32_WINNT=0x0A00` (Windows 10+) — cpp-httplib отвергает 0x0601 (Win7)
+- cmake_build.bat в world-service использует PowerShell-совместимый подход с явными env vars
+- httplib API: `req.form.has_file()` / `req.form.get_file()` / `req.form.get_field()` (не `req.files`)
+
 ---
 
 ## ONNX Runtime на ARM64 Windows
@@ -127,7 +135,7 @@ CPUExecutionProvider — fallback если DML недоступен.
 
 - Точная скорость ONNX DmlExecutionProvider на Adreno для voice conversion моделей
 - Какие конкретно ONNX модели для voice conversion будут использоваться (уточнить на шаге ML сервиса)
-- Совместимость cpp-httplib с ARM64 Windows MSVC — проверить при сборке
+- ~~Совместимость cpp-httplib с ARM64 Windows MSVC~~ — подтверждена (MSVC 14.44.35207, VS 2022 BuildTools)
 
 ## Проверенные ограничения (Python ARM64 Windows)
 
