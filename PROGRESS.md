@@ -8,7 +8,7 @@
 ## Статус проекта
 
 **Фаза:** Phase 1
-**Текущий шаг:** 2 — ASP.NET Core оркестратор
+**Текущий шаг:** 3 — Python ML сервис
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -57,16 +57,16 @@
 ---
 
 ### Шаг 2 — ASP.NET Core оркестратор
-**Статус:** не начат
+**Статус:** завершён
 **Задача:** базовый MVC проект, SignalR хаб, NAudio захват, HTTP клиенты к сервисам
 **Acceptance criteria:**
-- [ ] Проект запускается на :5000
-- [ ] SignalR хаб /convertHub работает
-- [ ] NAudio захватывает аудио с Shure MV7i
-- [ ] Эндпоинт POST /convert принимает файл и параметры
-- [ ] HttpClient настроен для вызовов к :8001 и :8002
-- [ ] Файлы сохраняются в shared/audio/input/
-**Testing:** POST запрос к /convert возвращает 200
+- [x] Проект запускается на :5000
+- [x] SignalR хаб /convertHub работает (ConvertHub с IConvertClient, /convertHub endpoint)
+- [x] NAudio захватывает аудио с Shure MV7i (AudioCaptureService, WASAPI, поиск по "MV7i")
+- [x] Эндпоинт POST /api/convert принимает файл и параметры
+- [x] HttpClient настроен для вызовов к :8001 (MlService) и :8002 (WorldService)
+- [x] Файлы сохраняются в shared/audio/input/
+**Testing:** POST /api/convert вернул 200, записи в Conversions созданы, WAV файлы в shared/audio/input/ — подтверждено
 
 ---
 
@@ -160,3 +160,4 @@
 | 0 | старт | Инициализация .md файлов |
 | 0 | 2026-06-04 | Структура папок, .gitignore обновлён, scripts/start.ps1 заглушка |
 | 1 | 2026-06-04 | ASP.NET Core MVC проект, EF Core 8, модели Conversion/VoicePreset, миграция применена |
+| 2 | 2026-06-04 | SignalR ConvertHub, AudioCaptureService (WASAPI/NAudio), ConversionService, POST /api/convert, HttpClients :8001/:8002 |
