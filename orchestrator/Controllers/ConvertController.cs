@@ -14,6 +14,12 @@ public class ConvertController(
     AudioCaptureService capture,
     IConfiguration config) : ControllerBase
 {
+    // ── Health ────────────────────────────────────────────────────────────────
+
+    [HttpGet("/health")]
+    public IActionResult Health() =>
+        Ok(new { status = "ok", service = "orchestrator" });
+
     // ── Convert ──────────────────────────────────────────────────────────────
 
     [HttpPost("convert")]

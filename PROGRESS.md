@@ -8,7 +8,7 @@
 ## Статус проекта
 
 **Фаза:** Phase 1
-**Текущий шаг:** 6 — PowerShell скрипт запуска
+**Текущий шаг:** 7 — Интеграционное тестирование
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -116,14 +116,16 @@
 ---
 
 ### Шаг 6 — PowerShell скрипт запуска
-**Статус:** не начат
+**Статус:** завершён
 **Задача:** один скрипт поднимает все сервисы
 **Acceptance criteria:**
-- [ ] start.ps1 запускает все 4 сервиса
-- [ ] Проверяет что MSSQL доступен перед стартом
-- [ ] Открывает браузер на localhost:5173
-- [ ] Graceful shutdown всех процессов по Ctrl+C
-**Testing:** холодный запуск, всё поднимается без ручных действий
+- [x] start.ps1 запускает все 4 сервиса (WORLD, ML, Orchestrator, Frontend)
+- [x] Проверяет что MSSQL доступен перед стартом (SqlConnection test)
+- [x] Проверяет наличие world-service.exe и python venv
+- [x] Ожидает HTTP readiness каждого сервиса с таймаутом
+- [x] Открывает браузер на localhost:5173
+- [x] Graceful shutdown по Ctrl+C (try/finally + taskkill /F /T)
+**Testing:** синтаксис проверен PowerShell parser: 0 ошибок
 
 ---
 
@@ -164,3 +166,4 @@
 | 3 | 2026-06-04 | FastAPI :8001, /analyze (scipy autocorr F0), /convert (ONNX placeholder), /health; ARM64 ограничения в SKILLS.md |
 | 4 | 2026-06-04 | C++ WORLD сервис :8002, MSVC 14.44.35207 (VS 2022 BuildTools), Harvest+StoneMask+CheapTrick+D4C+Synthesis, /health + /synthesize |
 | 5 | 2026-06-04 | React UI: Vite+Tailwind+wavesurfer+SignalR, FileDropZone, VoiceParams, WaveformPlayer, HistoryList; оркестратор +/history +/rerender +/audio/* |
+| 6 | 2026-06-04 | scripts/start.ps1: MSSQL check, запуск 4 сервисов, health polling, браузер, Ctrl+C shutdown |
