@@ -20,7 +20,8 @@
 
 - **PyTorch:** не работает нативно на ARM64 Windows через pip. Использовать ONNX Runtime вместо PyTorch.
 - **CUDA:** недоступна. GPU доступен через DirectML (ONNX Runtime DmlExecutionProvider).
-- **RVC:** не поддерживается напрямую без патчинга под DirectML. Не использовать.
+- **RVC Python library (rvc-python):** требует PyTorch, недоступен на ARM64 Windows. Не использовать.
+- **RVC ONNX models:** работают через onnxruntime без PyTorch. Использовать экспорты из Applio (.onnx). Инференс реализован в ml-service/utils/rvc.py.
 - **Python wheels:** проверять наличие ARM64 wheel перед добавлением зависимости.
 
 ---

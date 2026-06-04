@@ -203,9 +203,10 @@ void shift_formants(double** spec, int f0_len, int fft_size, double ratio) {
 
     for (int i = 0; i < f0_len; i++) {
         for (int j = 0; j < half; j++) {
-            int src = (int)std::round(j / ratio);
-            src = std::max(0, std::min(half - 1, src));
-            tmp[j] = spec[i][src];
+            double src = j / ratio;
+            int lo = std::max(0, std::min(half - 2, (int)src));
+            double frac = src - lo;
+            tmp[j] = spec[i][lo] * (1.0 - frac) + spec[i][lo + 1] * frac;
         }
         memcpy(spec[i], tmp.data(), sizeof(double) * half);
     }

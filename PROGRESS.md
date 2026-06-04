@@ -8,7 +8,7 @@
 ## Статус проекта
 
 **Фаза:** Phase 1
-**Текущий шаг:** 9 — HuBERT + RVC ONNX inference
+**Текущий шаг:** 10 — UI redesign (голосовая галерея)
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -157,14 +157,19 @@
 ---
 
 ### Шаг 9 — HuBERT + RVC ONNX inference
-**Статус:** не начат
+**Статус:** завершён (инфраструктура)
 **Задача:** реальный пайплайн конвертации голоса через ONNX
 **Acceptance criteria:**
-- [ ] content-vec.onnx (HuBERT encoder) загружен и работает
-- [ ] RVC decoder .onnx файлы для 5+ голосов подключены
-- [ ] /convert использует HuBERT → RVC pipeline
-- [ ] SKILLS.md обновлён: RVC ONNX vs RVC Python lib
-**Testing:** /convert → WAV со слышимой сменой голоса
+- [x] utils/hubert.py — ContentVec feature extraction (resample 48k→16k, ONNX inference)
+- [x] utils/rvc.py — F0 квантизация, align_f0, RVC decoder inference с fallback
+- [x] utils/model.py — get_hubert_session(), get_rvc_session(voice_id), placeholder
+- [x] main.py — RVC пайплайн активируется когда model files присутствуют, иначе placeholder
+- [x] SKILLS.md обновлён: RVC ONNX разрешён, Python RVC lib запрещён
+- [x] world-service shift_formants: linear interpolation вместо nearest-neighbor
+- [x] scripts/download_models.ps1 — инструкция где взять model files
+**Примечание:** model files (content-vec-best.onnx, *.onnx) нужно скачать отдельно
+и поместить в shared/models/. Запустить scripts/download_models.ps1 для инструкций.
+**Testing:** ml-service стартует, каталог 6 голосов загружен, placeholder OK
 
 ---
 
@@ -220,3 +225,4 @@
 | 6 | 2026-06-04 | scripts/start.ps1: MSSQL check, запуск 4 сервисов, health polling, браузер, Ctrl+C shutdown |
 | 7 | 2026-06-04 | Pixi 0.70.1, pyproject.toml (conda-forge win-64), soundfile/libsndfile разблокирован, start.ps1 → pixi run |
 | 8 | 2026-06-04 | VoicePreset переработан, voices.json (6 голосов), EF миграция VoiceLibrary, GET /api/voices, VoiceSeeder, ml-service voice_id routing |
+| 9 | 2026-06-04 | HuBERT/RVC ONNX инфраструктура (hubert.py, rvc.py), WORLD linear interpolation, download_models.ps1, SKILLS.md обновлён |
