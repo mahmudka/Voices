@@ -30,6 +30,8 @@ public class ConversionService(
 
             var outputPath = await SynthesizeAsync(convertedPath, voiceType, age, timbre);
 
+            if (File.Exists(convertedPath)) File.Delete(convertedPath);
+
             await SendProgress(sessionId, 95, "Сохранение...");
 
             var outputFile = Path.GetFileName(outputPath);

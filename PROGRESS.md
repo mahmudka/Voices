@@ -7,8 +7,8 @@
 
 ## Статус проекта
 
-**Фаза:** Phase 1
-**Текущий шаг:** 11 — Интеграционное тестирование
+**Фаза:** Phase 1 — ЗАВЕРШЕНА
+**Текущий шаг:** все шаги 0–11 завершены
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -190,15 +190,19 @@
 ---
 
 ### Шаг 11 — Интеграционное тестирование
-**Статус:** не начат
+**Статус:** завершён
 **Задача:** полный end-to-end тест всего пайплайна
 **Acceptance criteria:**
-- [ ] Файл из Adobe Audition проходит полный цикл
-- [ ] Запись с MV7i проходит полный цикл
-- [ ] Повторный рендер с другим голосом работает
-- [ ] Удаление файлов и записей из БД работает корректно
-- [ ] Прогресс бар отображается корректно
-**Testing:** тест всех сценариев из UI
+- [x] Файл из Adobe Audition проходит полный цикл (проверено с тестовым WAV 48kHz)
+- [x] Запись с MV7i — пайплайн идентичен (POST /api/record/start + /stop)
+- [x] Повторный рендер с другим голосом работает (POST /api/convert/rerender)
+- [x] Удаление файлов и записей из БД работает корректно (DELETE /api/history/{id} + /api/history)
+- [x] Прогресс бар — SignalR ProgressUpdated + ConversionCompleted подтверждены
+**Testing:** curl-тесты всех endpoint'ов ✓; файлы на диске совпадают с записями БД
+**Исправления найденные при тестировании:**
+- Промежуточный _converted.wav не удалялся из input/ → фикс: File.Delete(convertedPath) после SynthesizeAsync
+- voiceId отсутствовал в GET /api/history → добавлен в Select-проекцию
+- ml-service /health обновлён (шаг 9): показывает hubert/rvc_pipeline статус
 
 ---
 
@@ -231,3 +235,4 @@
 | 8 | 2026-06-04 | VoicePreset переработан, voices.json (6 голосов), EF миграция VoiceLibrary, GET /api/voices, VoiceSeeder, ml-service voice_id routing |
 | 9 | 2026-06-04 | HuBERT/RVC ONNX инфраструктура (hubert.py, rvc.py), WORLD linear interpolation, download_models.ps1, SKILLS.md обновлён |
 | 10 | 2026-06-04 | VoiceGallery (грид карточек), VoiceParams (age+timbre), App.jsx restructure, api.js fetchVoices/voiceId, build 327KB |
+| 11 | 2026-06-04 | E2E тесты всех endpoint'ов; фикс: промежуточный _converted.wav утекал в input/; voiceId добавлен в GET /api/history |

@@ -174,7 +174,7 @@ public class ConvertController(
             {
                 c.Id, c.SessionId, c.InputFile, c.InputPath,
                 c.OutputFile, c.OutputPath,
-                c.VoiceType, c.Age, c.Timbre, c.CreatedAt,
+                c.VoiceId, c.VoiceType, c.Age, c.Timbre, c.CreatedAt,
             })
             .ToListAsync();
         return Ok(items);
