@@ -1,0 +1,42 @@
+# Node / React
+node_modules/
+dist/
+.vite/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# .NET
+bin/
+obj/
+*.user
+.vs/
+
+# C++
+build/
+*.o
+*.obj
+*.exe
+CMakeFiles/
+CMakeCache.txt
+
+# Audio temp files
+shared/audio/input/
+shared/audio/output/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/settings.json
