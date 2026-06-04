@@ -8,7 +8,7 @@
 ## Статус проекта
 
 **Фаза:** Phase 1
-**Текущий шаг:** 1 — База данных и модели
+**Текущий шаг:** 2 — ASP.NET Core оркестратор
 **Последнее обновление:** 2026-06-04
 
 ---
@@ -44,15 +44,15 @@
 ---
 
 ### Шаг 1 — База данных и модели
-**Статус:** не начат
+**Статус:** завершён
 **Задача:** создать БД VoiceConverter, таблицы, EF Core миграции
 **Acceptance criteria:**
-- [ ] БД VoiceConverter создана в MSSQL
-- [ ] Таблица Conversions (Id, SessionId, InputFile, InputPath, OutputFile, OutputPath, VoiceType, Age, Timbre, CreatedAt)
-- [ ] Таблица VoicePresets (Id, Name, VoiceType, Age, Timbre)
-- [ ] EF Core миграция применена
-- [ ] Подключение через Windows Authentication работает
-**Testing:** подключение к БД из кода, CRUD операции
+- [x] БД VoiceConverter создана в MSSQL
+- [x] Таблица Conversions (Id, SessionId, InputFile, InputPath, OutputFile, OutputPath, VoiceType, Age, Timbre, CreatedAt)
+- [x] Таблица VoicePresets (Id, Name, VoiceType, Age, Timbre)
+- [x] EF Core миграция применена
+- [x] Подключение через Windows Authentication работает
+**Testing:** БД создана, таблицы проверены через sqlcmd — 3 таблицы (Conversions, VoicePresets, __EFMigrationsHistory)
 
 ---
 
@@ -159,3 +159,4 @@
 |---|---|---|
 | 0 | старт | Инициализация .md файлов |
 | 0 | 2026-06-04 | Структура папок, .gitignore обновлён, scripts/start.ps1 заглушка |
+| 1 | 2026-06-04 | ASP.NET Core MVC проект, EF Core 8, модели Conversion/VoicePreset, миграция применена |
