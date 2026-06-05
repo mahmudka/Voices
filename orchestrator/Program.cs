@@ -5,6 +5,18 @@ using orchestrator.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Resolve relative config paths against the project root (ContentRootPath).
+{
+    var root = builder.Environment.ContentRootPath;
+    string[] pathKeys = ["Paths:SharedAudioInput", "Paths:SharedAudioOutput", "Paths:SharedModels"];
+    foreach (var key in pathKeys)
+    {
+        var val = builder.Configuration[key];
+        if (val is not null && !Path.IsPathRooted(val))
+            builder.Configuration[key] = Path.GetFullPath(Path.Combine(root, val));
+    }
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 

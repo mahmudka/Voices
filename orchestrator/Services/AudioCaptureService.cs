@@ -1,5 +1,6 @@
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace orchestrator.Services;
 
@@ -55,7 +56,34 @@ public class AudioCaptureService : IDisposable
         _capture.StopRecording();          // triggers OnRecordingStopped asynchronously
         await _stopTcs.Task;               // wait until file is closed
 
+        // WASAPI Shared Mode gives IEEE_FLOAT 32-bit which Web Audio API (WaveSurfer) can't decode.
+        // Convert to PCM 16-bit mono so the browser player can display the waveform.
+        ConvertToPcm16InPlace(path);
+
         return path;
+    }
+
+    private static void ConvertToPcm16InPlace(string path)
+    {
+        using (var probe = new WaveFileReader(path))
+        {
+            if (probe.WaveFormat.Encoding == WaveFormatEncoding.Pcm &&
+                probe.WaveFormat.BitsPerSample == 16)
+                return; // already PCM16, nothing to do
+        }
+
+        var tempPath = path + ".tmp";
+        using (var reader = new WaveFileReader(path))
+        {
+            ISampleProvider samples = reader.ToSampleProvider();
+            if (samples.WaveFormat.Channels > 1)
+                samples = new StereoToMonoSampleProvider(samples);
+
+            var pcm16 = new SampleToWaveProvider16(samples);
+            WaveFileWriter.CreateWaveFile(tempPath, pcm16);
+        }
+
+        File.Move(tempPath, path, overwrite: true);
     }
 
     public bool IsRecording => _capture is not null;
