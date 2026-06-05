@@ -20,11 +20,11 @@ public class ConversionService(
     {
         try
         {
-            await SendProgress(sessionId, 10, "Синтез речи...");
+            await hub.Clients.All.ProgressUpdated(sessionId, 10, "Синтез речи...");
 
             var outputWav = await GenerateAsync(text, voiceId, referenceAudioPath);
 
-            await SendProgress(sessionId, 80, "Сохранение...");
+            await hub.Clients.All.ProgressUpdated(sessionId, 80, "Сохранение...");
 
             var outputDir  = GetOutputDir();
             var outputFile = $"{sessionId}_output.wav";
@@ -38,12 +38,12 @@ public class ConversionService(
                     .SetProperty(c => c.OutputFile, outputFile)
                     .SetProperty(c => c.OutputPath, outputPath));
 
-            await hub.Clients.Group(sessionId).ConversionCompleted(sessionId, outputFile);
+            await hub.Clients.All.ConversionCompleted(sessionId, outputFile);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Generation failed for session {SessionId}", sessionId);
-            await hub.Clients.Group(sessionId).ConversionFailed(sessionId, ex.Message);
+            await hub.Clients.All.ConversionFailed(sessionId, ex.Message);
         }
     }
 
@@ -67,9 +67,6 @@ public class ConversionService(
         resp.EnsureSuccessStatusCode();
         return await resp.Content.ReadAsByteArrayAsync();
     }
-
-    private Task SendProgress(string sessionId, int percent, string stage)
-        => hub.Clients.Group(sessionId).ProgressUpdated(sessionId, percent, stage);
 
     private static string GetOutputDir()
     {
