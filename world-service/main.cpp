@@ -343,6 +343,106 @@ int main() {
         }
     });
 
+    // Resynthesize: takes WAV + external F0 (space-separated floats), returns WAV with new F0
+    svr.Post("/resynthesize", [](const httplib::Request& req, httplib::Response& res) {
+        try {
+            if (!req.form.has_file("file")) {
+                res.status = 400;
+                res.set_content("{\"error\":\"Missing file\"}", "application/json");
+                return;
+            }
+
+            const std::string& wav_data = req.form.get_file("file").content;
+            WavFile wav = parse_wav(wav_data);
+            if (wav.samples.empty()) throw std::runtime_error("Empty audio");
+
+            // Parse provided F0 array (space-separated Hz values, 0 = unvoiced)
+            std::vector<double> f0_ext;
+            if (req.form.has_field("f0")) {
+                std::istringstream iss(req.form.get_field("f0"));
+                double val;
+                while (iss >> val) f0_ext.push_back(std::max(0.0, val));
+            }
+
+            const int    x_len        = (int)wav.samples.size();
+            const int    fs           = wav.sample_rate;
+            const double frame_period = 5.0;
+
+            double* x = wav.samples.data();
+
+            // F0 estimation (needed for CheapTrick even if we override it)
+            HarvestOption h_opt{};
+            InitializeHarvestOption(&h_opt);
+            h_opt.frame_period = frame_period;
+            h_opt.f0_floor     = 50.0;
+            h_opt.f0_ceil      = 1100.0;
+
+            int f0_len = GetSamplesForHarvest(fs, x_len, frame_period);
+            std::vector<double> temporal_pos(f0_len);
+            std::vector<double> f0_orig(f0_len);
+
+            Harvest(x, x_len, fs, &h_opt, temporal_pos.data(), f0_orig.data());
+            StoneMask(x, x_len, fs, temporal_pos.data(), f0_orig.data(), f0_len, f0_orig.data());
+
+            // Spectral envelope
+            CheapTrickOption ct_opt{};
+            InitializeCheapTrickOption(fs, &ct_opt);
+            const int fft_size = ct_opt.fft_size;
+            const int half     = fft_size / 2 + 1;
+
+            double** spectrogram = new double*[f0_len];
+            for (int i = 0; i < f0_len; i++) spectrogram[i] = new double[half];
+            CheapTrick(x, x_len, fs, temporal_pos.data(), f0_orig.data(), f0_len, &ct_opt, spectrogram);
+
+            // Aperiodicity
+            D4COption d4c_opt{};
+            InitializeD4COption(&d4c_opt);
+            double** aperiodicity = new double*[f0_len];
+            for (int i = 0; i < f0_len; i++) aperiodicity[i] = new double[half];
+            D4C(x, x_len, fs, temporal_pos.data(), f0_orig.data(), f0_len,
+                fft_size, &d4c_opt, aperiodicity);
+
+            // Build final F0: interpolate provided array to WORLD frame count
+            std::vector<double> f0_final(f0_len);
+            if (f0_ext.size() >= 2) {
+                for (int i = 0; i < f0_len; i++) {
+                    double t   = (double)i * (f0_ext.size() - 1) / std::max(1, f0_len - 1);
+                    int    lo  = std::max(0, std::min((int)f0_ext.size() - 2, (int)t));
+                    double frac = t - lo;
+                    f0_final[i] = f0_ext[lo] * (1.0 - frac) + f0_ext[lo + 1] * frac;
+                    if (f0_final[i] < 0.0) f0_final[i] = 0.0;
+                }
+            } else if (f0_ext.size() == 1) {
+                std::fill(f0_final.begin(), f0_final.end(), f0_ext[0]);
+            } else {
+                f0_final = f0_orig;
+            }
+
+            // Synthesis
+            int y_len = (int)(f0_len * frame_period / 1000.0 * fs) + 1;
+            std::vector<double> y(y_len, 0.0);
+            Synthesis(f0_final.data(), f0_len, spectrogram, aperiodicity,
+                      fft_size, frame_period, fs, y_len, y.data());
+
+            for (int i = 0; i < f0_len; i++) {
+                delete[] spectrogram[i];
+                delete[] aperiodicity[i];
+            }
+            delete[] spectrogram;
+            delete[] aperiodicity;
+
+            auto out = encode_wav(y, fs);
+            res.set_content(std::string(out.begin(), out.end()), "audio/wav");
+
+        } catch (const std::exception& e) {
+            res.status = 500;
+            std::string msg = "{\"error\":\"";
+            msg += e.what();
+            msg += "\"}";
+            res.set_content(msg, "application/json");
+        }
+    });
+
     printf("[world-service] Listening on :8002\n");
     fflush(stdout);
 

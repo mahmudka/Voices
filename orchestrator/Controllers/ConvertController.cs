@@ -20,75 +20,48 @@ public class ConvertController(
     public IActionResult Health() =>
         Ok(new { status = "ok", service = "orchestrator" });
 
-    // ── Convert ──────────────────────────────────────────────────────────────
+    // ── Generate (text → speech) ─────────────────────────────────────────────
 
-    [HttpPost("convert")]
-    public async Task<IActionResult> Convert([FromForm] ConvertRequest request)
+    [HttpPost("generate")]
+    public async Task<IActionResult> Generate([FromForm] GenerateRequest req)
     {
-        if (request.File is null || request.File.Length == 0)
-            return BadRequest(new { error = "Файл не передан." });
+        if (string.IsNullOrWhiteSpace(req.Text))
+            return BadRequest(new { error = "Текст не передан." });
 
-        if (!request.File.FileName.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(new { error = "Допустимый формат: WAV." });
+        if (string.IsNullOrWhiteSpace(req.VoiceId))
+            return BadRequest(new { error = "voice_id не передан." });
 
-        var sessionId = Guid.NewGuid().ToString();
-        var inputDir = config["Paths:SharedAudioInput"]!;
+        var sessionId  = Guid.NewGuid().ToString();
+        var inputDir   = config["Paths:SharedAudioInput"]!;
         Directory.CreateDirectory(inputDir);
 
-        var inputFile = $"{sessionId}_{Path.GetFileName(request.File.FileName)}";
-        var inputPath = Path.Combine(inputDir, inputFile);
-
-        await using (var fs = System.IO.File.Create(inputPath))
-            await request.File.CopyToAsync(fs);
+        // Optionally save reference audio to disk
+        string? refPath = null;
+        if (req.Reference is { Length: > 0 })
+        {
+            var refFile = $"{sessionId}_ref.wav";
+            refPath = Path.Combine(inputDir, refFile);
+            await using var fs = System.IO.File.Create(refPath);
+            await req.Reference.CopyToAsync(fs);
+        }
 
         var conversion = new Conversion
         {
             SessionId = sessionId,
-            InputFile = inputFile,
-            InputPath = inputPath,
-            VoiceId = request.VoiceId,
-            VoiceType = request.VoiceType,
-            Age = request.Age,
-            Timbre = request.Timbre,
+            InputText = req.Text,
+            InputFile = refPath is not null ? Path.GetFileName(refPath) : string.Empty,
+            InputPath = refPath ?? string.Empty,
+            VoiceId   = req.VoiceId,
+            VoiceType = "tts",
+            Age       = 0,
+            Timbre    = string.Empty,
         };
         db.Conversions.Add(conversion);
         await db.SaveChangesAsync();
 
-        FireAndForget(sessionId, inputPath, request.VoiceId, request.VoiceType, request.Age, request.Timbre);
+        FireAndForget(sessionId, req.Text, req.VoiceId, refPath);
 
         return Ok(new { sessionId, status = "processing" });
-    }
-
-    [HttpPost("convert/rerender")]
-    public async Task<IActionResult> Rerender([FromBody] RerenderRequest request)
-    {
-        var existing = await db.Conversions
-            .Where(c => c.SessionId == request.SessionId)
-            .OrderByDescending(c => c.CreatedAt)
-            .FirstOrDefaultAsync();
-
-        if (existing is null)
-            return NotFound(new { error = "Сессия не найдена." });
-
-        if (!System.IO.File.Exists(existing.InputPath))
-            return UnprocessableEntity(new { error = "Исходный файл удалён." });
-
-        var conversion = new Conversion
-        {
-            SessionId = request.SessionId,
-            InputFile = existing.InputFile,
-            InputPath = existing.InputPath,
-            VoiceId = request.VoiceId,
-            VoiceType = request.VoiceType,
-            Age = request.Age,
-            Timbre = request.Timbre,
-        };
-        db.Conversions.Add(conversion);
-        await db.SaveChangesAsync();
-
-        FireAndForget(request.SessionId, existing.InputPath, request.VoiceId, request.VoiceType, request.Age, request.Timbre);
-
-        return Ok(new { sessionId = request.SessionId, status = "processing" });
     }
 
     // ── Record ───────────────────────────────────────────────────────────────
@@ -100,43 +73,27 @@ public class ConvertController(
             return Conflict(new { error = "Запись уже идёт." });
 
         var sessionId = Guid.NewGuid().ToString();
-        var inputDir = config["Paths:SharedAudioInput"]!;
+        var inputDir  = config["Paths:SharedAudioInput"]!;
         Directory.CreateDirectory(inputDir);
 
         var inputFile = $"{sessionId}_mic.wav";
         var inputPath = Path.Combine(inputDir, inputFile);
 
         capture.StartRecording(inputPath, sessionId);
-
         return Ok(new { sessionId, inputFile });
     }
 
     [HttpPost("record/stop")]
-    public async Task<IActionResult> StopRecord([FromBody] RecordStopRequest request)
+    public async Task<IActionResult> StopRecord()
     {
         if (!capture.IsRecording)
             return BadRequest(new { error = "Запись не запущена." });
 
         var sessionId = capture.CurrentSessionId!;
-        var inputPath = await capture.StopRecordingAsync();   // waits until NAudio flushes the file
-        var inputFile = Path.GetFileName(inputPath);
+        var refPath   = await capture.StopRecordingAsync();
+        var inputFile = Path.GetFileName(refPath);
 
-        var conversion = new Conversion
-        {
-            SessionId = sessionId,
-            InputFile = inputFile,
-            InputPath = inputPath,
-            VoiceId = request.VoiceId,
-            VoiceType = request.VoiceType,
-            Age = request.Age,
-            Timbre = request.Timbre,
-        };
-        db.Conversions.Add(conversion);
-        await db.SaveChangesAsync();
-
-        FireAndForget(sessionId, inputPath, request.VoiceId, request.VoiceType, request.Age, request.Timbre);
-
-        return Ok(new { sessionId, inputFile, status = "processing" });
+        return Ok(new { sessionId, inputFile, refPath, status = "ready" });
     }
 
     [HttpGet("devices")]
@@ -151,16 +108,17 @@ public class ConvertController(
     [HttpGet("voices")]
     public async Task<IActionResult> GetVoices()
     {
-        var voices = await db.VoicePresets
-            .OrderBy(v => v.Gender)
-            .ThenBy(v => v.Name)
-            .Select(v => new
-            {
-                v.VoiceId, v.Name, v.Gender, v.Description, v.Icon,
-                v.DefaultAge, v.DefaultTimbre, v.AgeMin, v.AgeMax,
-            })
-            .ToListAsync();
-        return Ok(voices);
+        // Forward to ml-service which returns Edge TTS voice list
+        using var http = new HttpClient();
+        try
+        {
+            var resp = await http.GetStringAsync("http://localhost:8001/voices");
+            return Content(resp, "application/json");
+        }
+        catch
+        {
+            return Ok(Array.Empty<object>());
+        }
     }
 
     // ── History ───────────────────────────────────────────────────────────────
@@ -172,9 +130,10 @@ public class ConvertController(
             .OrderByDescending(c => c.CreatedAt)
             .Select(c => new
             {
-                c.Id, c.SessionId, c.InputFile, c.InputPath,
+                c.Id, c.SessionId,
+                c.InputText, c.InputFile, c.InputPath,
                 c.OutputFile, c.OutputPath,
-                c.VoiceId, c.VoiceType, c.Age, c.Timbre, c.CreatedAt,
+                c.VoiceId, c.CreatedAt,
             })
             .ToListAsync();
         return Ok(items);
@@ -185,19 +144,8 @@ public class ConvertController(
     {
         var c = await db.Conversions.FindAsync(id);
         if (c is null) return NotFound();
-
         DeleteFiles(c.InputPath, c.OutputPath);
         db.Conversions.Remove(c);
-        await db.SaveChangesAsync();
-        return NoContent();
-    }
-
-    [HttpDelete("history/session/{sessionId}")]
-    public async Task<IActionResult> DeleteSession(string sessionId)
-    {
-        var items = await db.Conversions.Where(c => c.SessionId == sessionId).ToListAsync();
-        foreach (var c in items) DeleteFiles(c.InputPath, c.OutputPath);
-        db.Conversions.RemoveRange(items);
         await db.SaveChangesAsync();
         return NoContent();
     }
@@ -215,18 +163,12 @@ public class ConvertController(
     // ── Audio streaming ───────────────────────────────────────────────────────
 
     [HttpGet("audio/input/{filename}")]
-    public IActionResult ServeInput(string filename)
-    {
-        var dir = config["Paths:SharedAudioInput"]!;
-        return ServeFile(dir, filename);
-    }
+    public IActionResult ServeInput(string filename) =>
+        ServeFile(config["Paths:SharedAudioInput"]!, filename);
 
     [HttpGet("audio/output/{filename}")]
-    public IActionResult ServeOutput(string filename)
-    {
-        var dir = config["Paths:SharedAudioOutput"]!;
-        return ServeFile(dir, filename);
-    }
+    public IActionResult ServeOutput(string filename) =>
+        ServeFile(config["Paths:SharedAudioOutput"]!, filename);
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -241,23 +183,22 @@ public class ConvertController(
     private static void DeleteFiles(params string?[] paths)
     {
         foreach (var p in paths)
-        {
             if (!string.IsNullOrEmpty(p) && System.IO.File.Exists(p))
                 System.IO.File.Delete(p);
-        }
     }
 
-    private void FireAndForget(string sessionId, string inputPath, string? voiceId, string voiceType, int age, string timbre)
+    private void FireAndForget(string sessionId, string text, string voiceId, string? refPath)
     {
         _ = Task.Run(async () =>
         {
             await using var scope = scopeFactory.CreateAsyncScope();
             var svc = scope.ServiceProvider.GetRequiredService<ConversionService>();
-            await svc.ProcessAsync(sessionId, inputPath, voiceId, voiceType, age, timbre);
+            await svc.ProcessAsync(sessionId, text, voiceId, refPath);
         });
     }
 }
 
-public record ConvertRequest(IFormFile? File, string? VoiceId, string VoiceType, int Age, string Timbre);
-public record RerenderRequest(string SessionId, string? VoiceId, string VoiceType, int Age, string Timbre);
-public record RecordStopRequest(string? VoiceId, string VoiceType, int Age, string Timbre);
+public record GenerateRequest(
+    string? Text,
+    string? VoiceId,
+    IFormFile? Reference);

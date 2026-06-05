@@ -13,28 +13,25 @@ public class ConversionService(
     ILogger<ConversionService> logger)
 {
     public async Task ProcessAsync(
-        string sessionId, string inputPath,
-        string? voiceId, string voiceType, int age, string timbre)
+        string sessionId,
+        string text,
+        string voiceId,
+        string? referenceAudioPath)
     {
         try
         {
-            await SendProgress(sessionId, 10, "Анализ F0...");
+            await SendProgress(sessionId, 10, "Синтез речи...");
 
-            var f0Result = await AnalyzeAsync(inputPath);
+            var outputWav = await GenerateAsync(text, voiceId, referenceAudioPath);
 
-            await SendProgress(sessionId, 40, "Конвертация тембра...");
+            await SendProgress(sessionId, 80, "Сохранение...");
 
-            var convertedPath = await ConvertTimbreAsync(inputPath, f0Result, voiceId, voiceType, age, timbre);
+            var outputDir  = GetOutputDir();
+            var outputFile = $"{sessionId}_output.wav";
+            var outputPath = Path.Combine(outputDir, outputFile);
+            Directory.CreateDirectory(outputDir);
+            await File.WriteAllBytesAsync(outputPath, outputWav);
 
-            await SendProgress(sessionId, 70, "Синтез...");
-
-            var outputPath = await SynthesizeAsync(convertedPath, voiceType, age, timbre);
-
-            if (File.Exists(convertedPath)) File.Delete(convertedPath);
-
-            await SendProgress(sessionId, 95, "Сохранение...");
-
-            var outputFile = Path.GetFileName(outputPath);
             await db.Conversions
                 .Where(c => c.SessionId == sessionId)
                 .ExecuteUpdateAsync(s => s
@@ -45,78 +42,40 @@ public class ConversionService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Conversion failed for session {SessionId}", sessionId);
+            logger.LogError(ex, "Generation failed for session {SessionId}", sessionId);
             await hub.Clients.Group(sessionId).ConversionFailed(sessionId, ex.Message);
         }
     }
 
-    private async Task<string> AnalyzeAsync(string inputPath)
+    private async Task<byte[]> GenerateAsync(
+        string text, string voiceId, string? referenceAudioPath)
     {
         using var client = httpFactory.CreateClient("MlService");
-        using var content = BuildFileContent(inputPath);
+        using var form   = new MultipartFormDataContent();
 
-        var response = await client.PostAsync("/analyze", content);
-        response.EnsureSuccessStatusCode();
+        form.Add(new StringContent(text),    "text");
+        form.Add(new StringContent(voiceId), "voice_id");
 
-        return await response.Content.ReadAsStringAsync();
-    }
+        if (!string.IsNullOrEmpty(referenceAudioPath) && File.Exists(referenceAudioPath))
+        {
+            var refBytes = await File.ReadAllBytesAsync(referenceAudioPath);
+            form.Add(new ByteArrayContent(refBytes), "reference",
+                     Path.GetFileName(referenceAudioPath));
+        }
 
-    private async Task<string> ConvertTimbreAsync(
-        string inputPath, string f0Json, string? voiceId, string voiceType, int age, string timbre)
-    {
-        using var client = httpFactory.CreateClient("MlService");
-        using var form = new MultipartFormDataContent();
-
-        form.Add(new StreamContent(File.OpenRead(inputPath)), "file", Path.GetFileName(inputPath));
-        form.Add(new StringContent(f0Json), "f0");
-        if (!string.IsNullOrEmpty(voiceId))
-            form.Add(new StringContent(voiceId), "voice_id");
-        form.Add(new StringContent(voiceType), "voice_type");
-        form.Add(new StringContent(age.ToString()), "age");
-        form.Add(new StringContent(timbre), "timbre");
-
-        var response = await client.PostAsync("/convert", form);
-        response.EnsureSuccessStatusCode();
-
-        var outputPath = Path.ChangeExtension(inputPath, null) + "_converted.wav";
-        await using var fs = File.Create(outputPath);
-        await response.Content.CopyToAsync(fs);
-
-        return outputPath;
-    }
-
-    private async Task<string> SynthesizeAsync(
-        string inputPath, string voiceType, int age, string timbre)
-    {
-        using var client = httpFactory.CreateClient("WorldService");
-        using var form = new MultipartFormDataContent();
-
-        form.Add(new StreamContent(File.OpenRead(inputPath)), "file", Path.GetFileName(inputPath));
-        form.Add(new StringContent(voiceType), "voice_type");
-        form.Add(new StringContent(age.ToString()), "age");
-        form.Add(new StringContent(timbre), "timbre");
-
-        var response = await client.PostAsync("/synthesize", form);
-        response.EnsureSuccessStatusCode();
-
-        var outputDir = Path.GetDirectoryName(inputPath)!
-            .Replace("input", "output", StringComparison.OrdinalIgnoreCase);
-        Directory.CreateDirectory(outputDir);
-
-        var outputPath = Path.Combine(outputDir, Path.GetFileName(inputPath));
-        await using var fs = File.Create(outputPath);
-        await response.Content.CopyToAsync(fs);
-
-        return outputPath;
+        var resp = await client.PostAsync("/generate", form);
+        resp.EnsureSuccessStatusCode();
+        return await resp.Content.ReadAsByteArrayAsync();
     }
 
     private Task SendProgress(string sessionId, int percent, string stage)
         => hub.Clients.Group(sessionId).ProgressUpdated(sessionId, percent, stage);
 
-    private static MultipartFormDataContent BuildFileContent(string path)
+    private static string GetOutputDir()
     {
-        var form = new MultipartFormDataContent();
-        form.Add(new StreamContent(File.OpenRead(path)), "file", Path.GetFileName(path));
-        return form;
+        // Resolve relative to the shared audio output folder
+        var exe  = AppContext.BaseDirectory;
+        var root = Path.GetFullPath(Path.Combine(exe, "..", "..", "..", "..", ".."));
+        return Path.Combine(root, "shared", "audio", "output");
     }
 }
