@@ -1,53 +1,60 @@
 @import "tailwindcss";
 
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+
 @layer base {
   :root {
-    --background:        40 17% 97%;
-    --foreground:        222 47% 11%;
-    --card:              0 0% 100%;
-    --card-foreground:   222 47% 11%;
-    --popover:           0 0% 100%;
-    --popover-foreground:222 47% 11%;
-    --primary:           222 47% 11%;
-    --primary-foreground:0 0% 98%;
-    --secondary:         210 16% 94%;
-    --secondary-foreground:222 47% 11%;
-    --muted:             210 16% 94%;
-    --muted-foreground:  215 16% 47%;
-    --accent:            210 16% 94%;
-    --accent-foreground: 222 47% 11%;
-    --destructive:       0 72% 51%;
-    --destructive-foreground:0 0% 98%;
-    --success:           142 71% 45%;
-    --success-foreground:0 0% 98%;
-    --border:            220 13% 91%;
-    --input:             220 13% 91%;
-    --ring:              222 47% 11%;
-    --radius:            0.625rem;
+    --background:         40 17% 97%;
+    --foreground:         222 47% 11%;
+    --card:               0 0% 100%;
+    --card-foreground:    222 47% 11%;
+    --popover:            0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary:            222 47% 11%;
+    --primary-foreground: 0 0% 98%;
+    --secondary:          210 16% 94%;
+    --secondary-foreground: 222 47% 11%;
+    --muted:              210 16% 94%;
+    --muted-foreground:   215 16% 47%;
+    --accent:             210 16% 94%;
+    --accent-foreground:  222 47% 11%;
+    --destructive:        0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --success:            142 71% 45%;
+    --success-foreground: 0 0% 98%;
+    --border:             220 13% 91%;
+    --input:              220 13% 91%;
+    --ring:               222 47% 11%;
+    --radius:             0.625rem;
+
+    --neon-cyan:    189 94% 43%;
+    --neon-orange:  25 95% 53%;
+    --neon-rose:    342 90% 56%;
+    --neon-amber:   38 95% 52%;
   }
 
   .dark {
-    --background:        224 9% 10%;
-    --foreground:        210 17% 95%;
-    --card:              224 9% 13%;
-    --card-foreground:   210 17% 95%;
-    --popover:           224 9% 13%;
-    --popover-foreground:210 17% 95%;
-    --primary:           210 17% 95%;
-    --primary-foreground:222 47% 11%;
-    --secondary:         222 9% 19%;
-    --secondary-foreground:210 17% 95%;
-    --muted:             222 9% 19%;
-    --muted-foreground:  215 14% 55%;
-    --accent:            222 9% 19%;
-    --accent-foreground: 210 17% 95%;
-    --destructive:       0 63% 42%;
-    --destructive-foreground:0 0% 98%;
-    --success:           142 71% 38%;
-    --success-foreground:0 0% 98%;
-    --border:            222 13% 20%;
-    --input:             222 13% 20%;
-    --ring:              210 17% 80%;
+    --background:         222 40% 5%;
+    --foreground:         210 17% 94%;
+    --card:               222 35% 8%;
+    --card-foreground:    210 17% 94%;
+    --popover:            222 35% 8%;
+    --popover-foreground: 210 17% 94%;
+    --primary:            189 94% 43%;
+    --primary-foreground: 222 47% 6%;
+    --secondary:          222 28% 13%;
+    --secondary-foreground: 210 17% 94%;
+    --muted:              222 28% 13%;
+    --muted-foreground:   215 14% 52%;
+    --accent:             222 28% 13%;
+    --accent-foreground:  210 17% 94%;
+    --destructive:        0 63% 42%;
+    --destructive-foreground: 0 0% 98%;
+    --success:            142 71% 38%;
+    --success-foreground: 0 0% 98%;
+    --border:             222 25% 14%;
+    --input:              222 25% 14%;
+    --ring:               189 94% 43%;
   }
 }
 
@@ -62,7 +69,7 @@
   }
 }
 
-/* ── Animations ────────────────────────────────────────────────────────────── */
+/* ── Keyframes ─────────────────────────────────────────────────────────────── */
 
 @keyframes shimmer {
   from { background-position: 200% center; }
@@ -95,10 +102,33 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes rotate-cw {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes rotate-ccw {
+  to { transform: translate(-50%, -50%) rotate(-360deg); }
+}
+
+@keyframes particle-float {
+  0%, 100% { transform: translateY(0)    scale(1);   opacity: 0.25; }
+  50%       { transform: translateY(-14px) scale(1.3); opacity: 0.6; }
+}
+
+@keyframes neon-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
+@keyframes hero-glow-pulse {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50%       { opacity: 0.8; transform: translate(-50%, -50%) scale(1.08); }
+}
+
 /* ── Utility classes ───────────────────────────────────────────────────────── */
 
-.animate-fade-in-up  { animation: fade-in-up 0.25s ease both; }
-.animate-scale-in    { animation: scale-in  0.2s  ease both; }
+.animate-fade-in-up { animation: fade-in-up 0.25s ease both; }
+.animate-scale-in   { animation: scale-in  0.2s  ease both; }
 
 .btn-success { animation: success-flash 1s ease forwards; }
 .btn-error   { animation: error-flash   1s ease forwards; }
@@ -106,9 +136,9 @@
 .progress-shimmer {
   background: linear-gradient(
     90deg,
-    hsl(var(--primary))       25%,
-    hsl(var(--primary) / 0.5) 50%,
-    hsl(var(--primary))       75%
+    hsl(var(--neon-cyan))        25%,
+    hsl(var(--neon-cyan) / 0.4)  50%,
+    hsl(var(--neon-cyan))        75%
   );
   background-size: 200% auto;
   animation: shimmer 1.8s linear infinite;
@@ -124,6 +154,123 @@
 }
 
 /* Gender glow shadows */
-.glow-blue   { box-shadow: 0 0 0 1px hsl(217 91% 60% / 0.25), 0 4px 16px hsl(217 91% 60% / 0.15); }
-.glow-rose   { box-shadow: 0 0 0 1px hsl(350 89% 60% / 0.25), 0 4px 16px hsl(350 89% 60% / 0.15); }
-.glow-amber  { box-shadow: 0 0 0 1px hsl(38  92% 50% / 0.25), 0 4px 16px hsl(38  92% 50% / 0.15); }
+.glow-blue  { box-shadow: 0 0 0 1px hsl(189 94% 43% / 0.4), 0 4px 20px hsl(189 94% 43% / 0.25); }
+.glow-rose  { box-shadow: 0 0 0 1px hsl(342 90% 56% / 0.4), 0 4px 20px hsl(342 90% 56% / 0.25); }
+.glow-amber { box-shadow: 0 0 0 1px hsl(38  95% 52% / 0.4), 0 4px 20px hsl(38  95% 52% / 0.25); }
+
+/* ── Hero section ──────────────────────────────────────────────────────────── */
+
+.hero-section {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: radial-gradient(
+    ellipse 80% 100% at 50% 0%,
+    hsl(222 55% 11%) 0%,
+    hsl(222 40% 5%)  70%
+  );
+  border: 1px solid hsl(var(--neon-cyan) / 0.15);
+}
+
+.dark .hero-section {
+  border-color: hsl(var(--neon-cyan) / 0.15);
+}
+
+.hero-glow {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 340px; height: 340px;
+  background: radial-gradient(circle, hsl(var(--neon-cyan) / 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: hero-glow-pulse 4s ease-in-out infinite;
+}
+
+.hero-glow-orange {
+  position: absolute;
+  top: 55%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, hsl(var(--neon-orange) / 0.07) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: hero-glow-pulse 5s 1s ease-in-out infinite;
+}
+
+/* Particle dots */
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: hsl(var(--neon-cyan));
+  pointer-events: none;
+  animation: particle-float linear infinite;
+}
+
+/* Rotating rings around headphone */
+.hero-rings {
+  position: relative;
+  width: 160px; height: 160px;
+  flex-shrink: 0;
+}
+
+.ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.ring-1 {
+  width: 155px; height: 155px;
+  border: 1.5px solid hsl(var(--neon-cyan) / 0.5);
+  box-shadow: 0 0 12px hsl(var(--neon-cyan) / 0.2), inset 0 0 8px hsl(var(--neon-cyan) / 0.05);
+  animation: rotate-cw 12s linear infinite;
+}
+
+.ring-2 {
+  width: 124px; height: 124px;
+  border: 1.5px dashed hsl(var(--neon-orange) / 0.55);
+  box-shadow: 0 0 8px hsl(var(--neon-orange) / 0.2);
+  animation: rotate-ccw 8s linear infinite;
+}
+
+.ring-3 {
+  width: 96px; height: 96px;
+  border: 1px solid hsl(var(--neon-cyan) / 0.4);
+  animation: rotate-cw 5s linear infinite;
+}
+
+/* Hero text */
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  background: linear-gradient(
+    135deg,
+    #e2e8f0  0%,
+    #06b6d4  45%,
+    #e2e8f0  100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+.hero-subtitle {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: hsl(var(--neon-cyan) / 0.75);
+  animation: neon-pulse 3s ease-in-out infinite;
+}
+
+/* ── Waveform neon playing state ────────────────────────────────────────────── */
+
+.waveform-playing {
+  box-shadow: 0 0 0 1px hsl(var(--neon-cyan) / 0.35), 0 0 18px hsl(var(--neon-cyan) / 0.15);
+}

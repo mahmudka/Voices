@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Play, Pause, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+const NEON_CYAN   = '#06b6d4'
+const NEON_BRIGHT = '#22d3ee'
+
 function isDark() {
   return document.documentElement.classList.contains('dark')
 }
@@ -24,9 +27,9 @@ export function WaveformPlayer({ url, label, downloadName }) {
     const dark = isDark()
     const ws = WaveSurfer.create({
       container:     containerRef.current,
-      waveColor:     dark ? '#475569' : '#cbd5e1',
-      progressColor: dark ? '#e2e8f0' : '#1e293b',
-      cursorColor:   dark ? '#94a3b8' : '#64748b',
+      waveColor:     dark ? '#1e3a4a' : '#cbd5e1',
+      progressColor: dark ? NEON_CYAN : '#1e293b',
+      cursorColor:   dark ? NEON_BRIGHT : '#64748b',
       height:        56,
       barWidth:      2,
       barGap:        1.5,
@@ -69,7 +72,12 @@ export function WaveformPlayer({ url, label, downloadName }) {
             disabled={!ready}
             className={cn(
               'transition-all duration-150',
-              playing && 'border-primary bg-primary/10 text-primary',
+              playing && [
+                'border-[hsl(var(--neon-cyan))]',
+                'bg-[hsl(var(--neon-cyan)/0.12)]',
+                'text-[hsl(var(--neon-cyan))]',
+                'shadow-[0_0_10px_hsl(var(--neon-cyan)/0.35)]',
+              ],
             )}
           >
             {playing
@@ -78,7 +86,8 @@ export function WaveformPlayer({ url, label, downloadName }) {
             }
           </Button>
           {downloadName && (
-            <Button size="icon" variant="outline" onClick={handleDownload} disabled={!ready}>
+            <Button size="icon" variant="outline" onClick={handleDownload} disabled={!ready}
+              className="dark:border-white/10">
               <Download className="h-4 w-4" />
             </Button>
           )}
@@ -88,8 +97,9 @@ export function WaveformPlayer({ url, label, downloadName }) {
       <div
         ref={containerRef}
         className={cn(
-          'rounded-lg border bg-muted/20 px-2 py-1',
+          'rounded-lg border bg-muted/10 px-2 py-1 transition-all duration-300',
           !ready && 'animate-pulse',
+          playing && 'waveform-playing',
         )}
       />
     </div>

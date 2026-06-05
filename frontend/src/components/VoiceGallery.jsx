@@ -1,9 +1,27 @@
 import { cn } from '@/lib/utils'
 
 const GENDER = {
-  male:   { bg: 'bg-blue-500/10',  text: 'text-blue-600 dark:text-blue-400',  glow: 'glow-blue',  ring: 'border-blue-400/60'  },
-  female: { bg: 'bg-rose-500/10',  text: 'text-rose-600 dark:text-rose-400',  glow: 'glow-rose',  ring: 'border-rose-400/60'  },
-  child:  { bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', glow: 'glow-amber', ring: 'border-amber-400/60' },
+  male: {
+    bg:   'bg-cyan-500/10 dark:bg-cyan-400/8',
+    text: 'text-cyan-600 dark:text-cyan-400',
+    glow: 'glow-blue',
+    ring: 'border-cyan-400/70',
+    dot:  'bg-cyan-400',
+  },
+  female: {
+    bg:   'bg-rose-500/10 dark:bg-rose-400/8',
+    text: 'text-rose-600 dark:text-rose-400',
+    glow: 'glow-rose',
+    ring: 'border-rose-400/70',
+    dot:  'bg-rose-400',
+  },
+  child: {
+    bg:   'bg-amber-500/10 dark:bg-amber-400/8',
+    text: 'text-amber-600 dark:text-amber-400',
+    glow: 'glow-amber',
+    ring: 'border-amber-400/70',
+    dot:  'bg-amber-400',
+  },
 }
 
 export function VoiceGallery({ voices, selectedId, onSelect, disabled }) {
@@ -18,7 +36,7 @@ export function VoiceGallery({ voices, selectedId, onSelect, disabled }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
       {voices.map(voice => {
-        const g = GENDER[voice.gender] ?? GENDER.male
+        const g        = GENDER[voice.gender] ?? GENDER.male
         const selected = selectedId === voice.voiceId
 
         return (
@@ -32,17 +50,19 @@ export function VoiceGallery({ voices, selectedId, onSelect, disabled }) {
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               'active:scale-[0.97]',
               selected
-                ? [g.ring, 'bg-primary/5 shadow-sm', g.glow, 'scale-[1.01]']
-                : 'border-border bg-card hover:border-border/60 hover:bg-muted/50',
-              !selected && !disabled && [
-                voice.gender === 'male'   && 'hover:glow-blue',
-                voice.gender === 'female' && 'hover:glow-rose',
-                voice.gender === 'child'  && 'hover:glow-amber',
-              ],
+                ? [g.ring, 'bg-primary/5', g.glow, 'scale-[1.02]']
+                : [
+                    'border-border dark:border-white/6',
+                    'bg-card',
+                    'hover:border-opacity-60',
+                    voice.gender === 'male'   && 'hover:border-cyan-400/40  hover:glow-blue',
+                    voice.gender === 'female' && 'hover:border-rose-400/40  hover:glow-rose',
+                    voice.gender === 'child'  && 'hover:border-amber-400/40 hover:glow-amber',
+                  ],
               disabled && 'pointer-events-none opacity-50',
             )}
           >
-            {/* Icon */}
+            {/* Avatar icon */}
             <div className={cn(
               'flex h-10 w-10 items-center justify-center rounded-full text-base font-bold',
               'transition-transform duration-200',
@@ -52,7 +72,7 @@ export function VoiceGallery({ voices, selectedId, onSelect, disabled }) {
               {voice.icon}
             </div>
 
-            {/* Text */}
+            {/* Name + description */}
             <div className="min-w-0">
               <p className={cn(
                 'text-sm font-semibold leading-tight truncate transition-colors duration-150',
@@ -65,13 +85,11 @@ export function VoiceGallery({ voices, selectedId, onSelect, disabled }) {
               </p>
             </div>
 
-            {/* Selected dot */}
+            {/* Selected indicator */}
             {selected && (
               <span className={cn(
                 'absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full animate-scale-in',
-                voice.gender === 'male'   && 'bg-blue-400',
-                voice.gender === 'female' && 'bg-rose-400',
-                voice.gender === 'child'  && 'bg-amber-400',
+                g.dot,
               )} />
             )}
           </button>
