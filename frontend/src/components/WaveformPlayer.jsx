@@ -21,7 +21,12 @@ export function WaveformPlayer({ url, label, downloadName }) {
   useEffect(() => {
     if (!url || !containerRef.current) return
 
-    wsRef.current?.destroy()
+    let active = true
+
+    const prev = wsRef.current
+    wsRef.current = null
+    prev?.destroy()
+
     setReady(false)
     setPlaying(false)
     setError(false)
@@ -39,13 +44,17 @@ export function WaveformPlayer({ url, label, downloadName }) {
       normalize:     true,
     })
 
-    ws.load(url).catch(() => setError(true))
-    ws.on('ready',  () => setReady(true))
-    ws.on('finish', () => setPlaying(false))
-    ws.on('error',  () => { setError(true); setReady(false) })
+    ws.load(url).catch(() => { if (active) setError(true) })
+    ws.on('ready',  ()  => { if (active) setReady(true) })
+    ws.on('finish', ()  => { if (active) setPlaying(false) })
+    ws.on('error',  (e) => { if (active) { console.error('WaveSurfer error', url, e); setError(true); setReady(false) } })
     wsRef.current = ws
 
-    return () => ws.destroy()
+    return () => {
+      active = false
+      wsRef.current = null
+      ws.destroy()
+    }
   }, [url])
 
   function togglePlay() {
