@@ -10,6 +10,7 @@ public class ConversionService(
     AppDbContext db,
     IHubContext<ConvertHub, IConvertClient> hub,
     IHttpClientFactory httpFactory,
+    IConfiguration config,
     ILogger<ConversionService> logger)
 {
     public async Task ProcessAsync(
@@ -26,10 +27,10 @@ public class ConversionService(
 
             await hub.Clients.All.ProgressUpdated(sessionId, 80, "Сохранение...");
 
-            var outputDir  = GetOutputDir();
+            var outputDir  = config["Paths:SharedAudioOutput"]!;
+            Directory.CreateDirectory(outputDir);
             var outputFile = $"{sessionId}_output.wav";
             var outputPath = Path.Combine(outputDir, outputFile);
-            Directory.CreateDirectory(outputDir);
             await File.WriteAllBytesAsync(outputPath, outputWav);
 
             await db.Conversions
@@ -66,13 +67,5 @@ public class ConversionService(
         var resp = await client.PostAsync("/generate", form);
         resp.EnsureSuccessStatusCode();
         return await resp.Content.ReadAsByteArrayAsync();
-    }
-
-    private static string GetOutputDir()
-    {
-        // Resolve relative to the shared audio output folder
-        var exe  = AppContext.BaseDirectory;
-        var root = Path.GetFullPath(Path.Combine(exe, "..", "..", "..", "..", ".."));
-        return Path.Combine(root, "shared", "audio", "output");
     }
 }
