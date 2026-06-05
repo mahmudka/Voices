@@ -7,26 +7,43 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# Curated voice list — subset of Edge TTS voices with best quality.
-# Full list available via: asyncio.run(list_voices())
 PRESET_VOICES = [
-    # Russian
-    {"voiceId": "ru-RU-DmitryNeural",   "name": "Дмитрий",   "language": "ru-RU", "gender": "male"},
-    {"voiceId": "ru-RU-SvetlanaNeural", "name": "Светлана",  "language": "ru-RU", "gender": "female"},
-    # English
-    {"voiceId": "en-US-GuyNeural",      "name": "Guy",        "language": "en-US", "gender": "male"},
-    {"voiceId": "en-US-JennyNeural",    "name": "Jenny",      "language": "en-US", "gender": "female"},
-    {"voiceId": "en-GB-RyanNeural",     "name": "Ryan (UK)",  "language": "en-GB", "gender": "male"},
-    {"voiceId": "en-GB-SoniaNeural",    "name": "Sonia (UK)", "language": "en-GB", "gender": "female"},
+    # Russian (2 available)
+    {"voiceId": "ru-RU-DmitryNeural",              "name": "Дмитрий",   "language": "ru-RU", "gender": "male"},
+    {"voiceId": "ru-RU-SvetlanaNeural",            "name": "Светлана",  "language": "ru-RU", "gender": "female"},
+    # English US
+    {"voiceId": "en-US-AvaNeural",                 "name": "Ava",       "language": "en-US", "gender": "female"},
+    {"voiceId": "en-US-AndrewNeural",              "name": "Andrew",    "language": "en-US", "gender": "male"},
+    {"voiceId": "en-US-EmmaNeural",                "name": "Emma",      "language": "en-US", "gender": "female"},
+    {"voiceId": "en-US-BrianNeural",               "name": "Brian",     "language": "en-US", "gender": "male"},
+    {"voiceId": "en-US-GuyNeural",                 "name": "Guy",       "language": "en-US", "gender": "male"},
+    {"voiceId": "en-US-JennyNeural",               "name": "Jenny",     "language": "en-US", "gender": "female"},
+    # English UK
+    {"voiceId": "en-GB-RyanNeural",                "name": "Ryan",      "language": "en-GB", "gender": "male"},
+    {"voiceId": "en-GB-SoniaNeural",               "name": "Sonia",     "language": "en-GB", "gender": "female"},
+    {"voiceId": "en-GB-LibbyNeural",               "name": "Libby",     "language": "en-GB", "gender": "female"},
+    {"voiceId": "en-GB-ThomasNeural",              "name": "Thomas",    "language": "en-GB", "gender": "male"},
+    {"voiceId": "en-GB-MaisieNeural",              "name": "Maisie",    "language": "en-GB", "gender": "female"},
     # German
-    {"voiceId": "de-DE-ConradNeural",   "name": "Conrad",     "language": "de-DE", "gender": "male"},
-    {"voiceId": "de-DE-KatjaNeural",    "name": "Katja",      "language": "de-DE", "gender": "female"},
+    {"voiceId": "de-DE-SeraphinaMultilingualNeural","name": "Seraphina","language": "de-DE", "gender": "female"},
+    {"voiceId": "de-DE-FlorianMultilingualNeural", "name": "Florian",   "language": "de-DE", "gender": "male"},
+    {"voiceId": "de-DE-AmalaNeural",               "name": "Amala",     "language": "de-DE", "gender": "female"},
+    {"voiceId": "de-DE-ConradNeural",              "name": "Conrad",    "language": "de-DE", "gender": "male"},
+    {"voiceId": "de-DE-KatjaNeural",               "name": "Katja",     "language": "de-DE", "gender": "female"},
+    {"voiceId": "de-DE-KillianNeural",             "name": "Killian",   "language": "de-DE", "gender": "male"},
     # French
-    {"voiceId": "fr-FR-HenriNeural",    "name": "Henri",      "language": "fr-FR", "gender": "male"},
-    {"voiceId": "fr-FR-DeniseNeural",   "name": "Denise",     "language": "fr-FR", "gender": "female"},
-    # Spanish
-    {"voiceId": "es-ES-AlvaroNeural",   "name": "Álvaro",     "language": "es-ES", "gender": "male"},
-    {"voiceId": "es-ES-ElviraNeural",   "name": "Elvira",     "language": "es-ES", "gender": "female"},
+    {"voiceId": "fr-FR-VivienneMultilingualNeural","name": "Vivienne",  "language": "fr-FR", "gender": "female"},
+    {"voiceId": "fr-FR-RemyMultilingualNeural",    "name": "Rémy",      "language": "fr-FR", "gender": "male"},
+    {"voiceId": "fr-FR-DeniseNeural",              "name": "Denise",    "language": "fr-FR", "gender": "female"},
+    {"voiceId": "fr-FR-EloiseNeural",              "name": "Éloïse",    "language": "fr-FR", "gender": "female"},
+    {"voiceId": "fr-FR-HenriNeural",               "name": "Henri",     "language": "fr-FR", "gender": "male"},
+    # Spanish (3 available)
+    {"voiceId": "es-ES-XimenaNeural",              "name": "Ximena",    "language": "es-ES", "gender": "female"},
+    {"voiceId": "es-ES-AlvaroNeural",              "name": "Álvaro",    "language": "es-ES", "gender": "male"},
+    {"voiceId": "es-ES-ElviraNeural",              "name": "Elvira",    "language": "es-ES", "gender": "female"},
+    # Romanian (2 available)
+    {"voiceId": "ro-RO-AlinaNeural",               "name": "Alina",     "language": "ro-RO", "gender": "female"},
+    {"voiceId": "ro-RO-EmilNeural",                "name": "Emil",      "language": "ro-RO", "gender": "male"},
 ]
 
 
