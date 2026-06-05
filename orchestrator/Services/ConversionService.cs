@@ -52,19 +52,23 @@ public class ConversionService(
         string text, string voiceId, string? referenceAudioPath)
     {
         using var client = httpFactory.CreateClient("MlService");
-        using var form   = new MultipartFormDataContent();
 
-        form.Add(new StringContent(text),    "text");
-        form.Add(new StringContent(voiceId), "voice_id");
+        var query = $"/generate?text={Uri.EscapeDataString(text)}&voice_id={Uri.EscapeDataString(voiceId)}";
 
+        HttpResponseMessage resp;
         if (!string.IsNullOrEmpty(referenceAudioPath) && File.Exists(referenceAudioPath))
         {
-            var refBytes = await File.ReadAllBytesAsync(referenceAudioPath);
+            using var form     = new MultipartFormDataContent();
+            var refBytes       = await File.ReadAllBytesAsync(referenceAudioPath);
             form.Add(new ByteArrayContent(refBytes), "reference",
                      Path.GetFileName(referenceAudioPath));
+            resp = await client.PostAsync(query, form);
+        }
+        else
+        {
+            resp = await client.PostAsync(query, content: null);
         }
 
-        var resp = await client.PostAsync("/generate", form);
         resp.EnsureSuccessStatusCode();
         return await resp.Content.ReadAsByteArrayAsync();
     }

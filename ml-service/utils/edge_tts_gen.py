@@ -2,7 +2,7 @@ import logging
 import os
 import tempfile
 
-import librosa
+import av
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -56,9 +56,17 @@ async def _generate_async(text: str, voice_id: str, rate: str, pitch: str) -> tu
     os.close(tmp_fd)
     try:
         await comm.save(tmp_path)
-        audio, sr = librosa.load(tmp_path, sr=None, mono=True)
+        chunks = []
+        with av.open(tmp_path) as container:
+            stream = container.streams.audio[0]
+            sr = stream.codec_context.sample_rate
+            resampler = av.AudioResampler(format='fltp', layout='mono', rate=sr)
+            for frame in container.decode(stream):
+                for rf in resampler.resample(frame):
+                    chunks.append(rf.to_ndarray()[0])
+        audio = np.concatenate(chunks).astype(np.float32)
         logger.info("Edge TTS: voice=%s samples=%d sr=%d", voice_id, len(audio), sr)
-        return audio.astype(np.float32), int(sr)
+        return audio, sr
     finally:
         try:
             os.unlink(tmp_path)
