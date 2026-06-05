@@ -8,8 +8,15 @@
 ## Статус проекта
 
 **Фаза:** Phase 1 (продолжение)
-**Текущий шаг:** 13 — завершён
-**Последнее обновление:** 2026-06-04
+**Текущий шаг:** Фиксы пайплайна — завершены
+**Последнее обновление:** 2026-06-05
+
+### Текущее рабочее состояние (2026-06-05)
+- Генерация через Edge TTS работает (PyAV декодирует MP3, нет librosa/soundfile)
+- Waveform player исправлен (StrictMode double-effect, HTTPS redirect, Content-Disposition)
+- Русский текст корректно проходит orchestrator → ml-service (query params вместо form fields)
+- Запись микрофона: WASAPI IEEE_FLOAT конвертируется в PCM 16-bit для Web Audio API
+- Зависимости в .venv: edge-tts 7.2.8, av 17.0.1, numpy, scipy, fastapi, uvicorn
 
 ---
 
