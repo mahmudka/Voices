@@ -8,6 +8,7 @@ public class AudioCaptureService : IDisposable
     private WasapiCapture? _capture;
     private WaveFileWriter? _writer;
     private string? _currentOutputPath;
+    private TaskCompletionSource? _stopTcs;
     private bool _disposed;
 
     public string? CurrentSessionId { get; private set; }
@@ -41,14 +42,20 @@ public class AudioCaptureService : IDisposable
         _capture.StartRecording();
     }
 
-    public string StopRecording()
+    // Waits until NAudio fully flushes and closes the file before returning.
+    public async Task<string> StopRecordingAsync()
     {
         if (_capture is null || _currentOutputPath is null)
             throw new InvalidOperationException("No recording in progress.");
 
-        _capture.StopRecording();
+        _stopTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var path = _currentOutputPath;
         CurrentSessionId = null;
-        return _currentOutputPath;
+
+        _capture.StopRecording();          // triggers OnRecordingStopped asynchronously
+        await _stopTcs.Task;               // wait until file is closed
+
+        return path;
     }
 
     public bool IsRecording => _capture is not null;
@@ -74,6 +81,8 @@ public class AudioCaptureService : IDisposable
 
         _capture?.Dispose();
         _capture = null;
+
+        _stopTcs?.TrySetResult();
     }
 
     public void Dispose()

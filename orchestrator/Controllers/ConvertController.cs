@@ -118,7 +118,7 @@ public class ConvertController(
             return BadRequest(new { error = "Запись не запущена." });
 
         var sessionId = capture.CurrentSessionId!;
-        var inputPath = capture.StopRecording();
+        var inputPath = await capture.StopRecordingAsync();   // waits until NAudio flushes the file
         var inputFile = Path.GetFileName(inputPath);
 
         var conversion = new Conversion
