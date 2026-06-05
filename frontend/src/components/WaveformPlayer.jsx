@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import WaveSurfer from 'wavesurfer.js'
 import { Button } from '@/components/ui/button'
-import { Play, Pause, Download } from 'lucide-react'
+import { Play, Pause, Download, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NEON_CYAN   = '#06b6d4'
@@ -16,6 +16,7 @@ export function WaveformPlayer({ url, label, downloadName }) {
   const wsRef        = useRef(null)
   const [playing, setPlaying] = useState(false)
   const [ready,   setReady]   = useState(false)
+  const [error,   setError]   = useState(false)
 
   useEffect(() => {
     if (!url || !containerRef.current) return
@@ -23,6 +24,7 @@ export function WaveformPlayer({ url, label, downloadName }) {
     wsRef.current?.destroy()
     setReady(false)
     setPlaying(false)
+    setError(false)
 
     const dark = isDark()
     const ws = WaveSurfer.create({
@@ -37,9 +39,10 @@ export function WaveformPlayer({ url, label, downloadName }) {
       normalize:     true,
     })
 
-    ws.load(url).catch(() => {})
+    ws.load(url).catch(() => setError(true))
     ws.on('ready',  () => setReady(true))
     ws.on('finish', () => setPlaying(false))
+    ws.on('error',  () => { setError(true); setReady(false) })
     wsRef.current = ws
 
     return () => ws.destroy()
@@ -94,14 +97,21 @@ export function WaveformPlayer({ url, label, downloadName }) {
         </div>
       </div>
 
-      <div
-        ref={containerRef}
-        className={cn(
-          'rounded-lg border bg-muted/10 px-2 py-1 transition-all duration-300',
-          !ready && 'animate-pulse',
-          playing && 'waveform-playing',
-        )}
-      />
+      {error ? (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2.5">
+          <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+          <span className="text-xs text-destructive">Файл не найден или повреждён</span>
+        </div>
+      ) : (
+        <div
+          ref={containerRef}
+          className={cn(
+            'rounded-lg border bg-muted/10 px-2 py-1 transition-all duration-300',
+            !ready && 'animate-pulse',
+            playing && 'waveform-playing',
+          )}
+        />
+      )}
     </div>
   )
 }
