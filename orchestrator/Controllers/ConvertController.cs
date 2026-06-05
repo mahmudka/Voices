@@ -177,7 +177,7 @@ public class ConvertController(
         var safe = Path.GetFileName(filename);
         var path = Path.Combine(dir, safe);
         if (!System.IO.File.Exists(path)) return NotFound();
-        return PhysicalFile(Path.GetFullPath(path), "audio/wav", safe);
+        return PhysicalFile(Path.GetFullPath(path), "audio/wav");
     }
 
     private static void DeleteFiles(params string?[] paths)
