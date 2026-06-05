@@ -39,7 +39,7 @@ async def generate(
 
     # Step 1: TTS generation
     try:
-        tts_audio, tts_sr = tts_generate(text, voice_id)
+        tts_audio, tts_sr = await tts_generate(text, voice_id)
     except Exception as e:
         logger.error("TTS failed: %s", e)
         raise HTTPException(500, f"TTS error: {e}")

@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 import tempfile
@@ -50,14 +49,14 @@ async def _generate_async(text: str, voice_id: str, rate: str, pitch: str) -> tu
             pass
 
 
-def generate(
+async def generate(
     text: str,
     voice_id: str = "ru-RU-DmitryNeural",
     rate: str = "+0%",
     pitch: str = "+0Hz",
 ) -> tuple[np.ndarray, int]:
     """Generate TTS audio. Returns (float32 mono array, sample_rate)."""
-    return asyncio.run(_generate_async(text, voice_id, rate, pitch))
+    return await _generate_async(text, voice_id, rate, pitch)
 
 
 def list_voices() -> list[dict]:
