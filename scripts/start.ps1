@@ -76,8 +76,41 @@ function Wait-Http {
 function Start-Svc {
     param($label, $exe, $argList, $workDir)
     Write-Step "Запуск: $label"
-    $p = Start-Process -FilePath $exe -ArgumentList $argList -WorkingDirectory $workDir -PassThru
+    if ([string]::IsNullOrWhiteSpace([string]$argList)) {
+        $p = Start-Process -FilePath $exe -WorkingDirectory $workDir -PassThru
+    } else {
+        $p = Start-Process -FilePath $exe -ArgumentList $argList -WorkingDirectory $workDir -PassThru
+    }
     Register-Proc $p
+}
+
+function Stop-ByPort {
+    param([int[]]$ports)
+
+    foreach ($port in $ports) {
+        $lines = netstat -ano | Select-String ":$port"
+        foreach ($line in $lines) {
+            $parts = ($line.ToString() -split '\s+') | Where-Object { $_ -ne '' }
+            if ($parts.Length -lt 5) { continue }
+
+            $state = $parts[3]
+            $pidStr = $parts[4]
+
+            if ($state -ne 'LISTENING') { continue }
+
+            $targetPid = 0
+            if (-not [int]::TryParse($pidStr, [ref]$targetPid)) { continue }
+
+            if ($targetPid -le 0) { continue }
+
+            try {
+                Write-Warn "Порт $port занят PID $targetPid. Останавливаю процесс..."
+                taskkill /F /T /PID $targetPid 2>&1 | Out-Null
+            } catch {
+                Write-Warn "Не удалось остановить PID $targetPid на порту $port"
+            }
+        }
+    }
 }
 
 # ===========================================================================
@@ -90,6 +123,9 @@ Write-Host ""
 # 1. Pre-flight checks
 
 Write-Title "Проверки"
+
+# Stop stale services that may keep old binaries on expected ports.
+Stop-ByPort -ports @(5000, 5173, 8001, 8002)
 
 if (-not (Test-Path $WORLD_EXE)) {
     Write-Fail "world-service.exe не найден: $WORLD_EXE"

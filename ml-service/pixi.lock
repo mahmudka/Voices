@@ -85,6 +85,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/aom-3.9.1-he0c23c2_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/audioread-3.0.1-py311h1ea47a8_3.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/av-17.1.0-py311h06a8702_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/backports.zstd-1.5.0-py311h71c1bcc_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/brotli-1.2.0-h2d644bc_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/brotli-bin-1.2.0-hfd05255_1.conda
@@ -1199,6 +1200,25 @@ packages:
   - pkg:pypi/audioread?source=hash-mapping
   size: 45982
   timestamp: 1759429705548
+- conda: https://conda.anaconda.org/conda-forge/win-64/av-17.1.0-py311h06a8702_0.conda
+  sha256: 978c663178d010a4d5bc2c76976abb96b132e8533c9e4d258f400e77935d619a
+  md5: 99a4fdf06f3485cef7abd75eaef90fee
+  depends:
+  - ffmpeg >=8.1.1,<9.0a0
+  - numpy >=1.22
+  - numpy >=1.23,<3
+  - pillow
+  - python >=3.11,<3.12.0a0
+  - python_abi 3.11.* *_cp311
+  - ucrt >=10.0.20348.0
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  license: BSD-3-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/av?source=hash-mapping
+  size: 1094500
+  timestamp: 1780829497704
 - conda: https://conda.anaconda.org/conda-forge/win-64/backports.zstd-1.5.0-py311h71c1bcc_0.conda
   sha256: 532271606ee3f2d61d2caf02358cba2577800903385a624b93c95d1142413982
   md5: 47f2c5b37914e0d6cb2b502d4ece48cb

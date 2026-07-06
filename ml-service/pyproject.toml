@@ -17,6 +17,7 @@ fastapi   = ">=0.110"
 uvicorn   = ">=0.29"
 libsndfile = "*"
 ffmpeg    = "*"
+av = ">=17.1.0,<18"
 
 [tool.pixi.pypi-dependencies]
 python-multipart = ">=0.0.9"

@@ -32,6 +32,10 @@ shared/audio/input/*.WAV
 shared/audio/output/*.wav
 shared/audio/output/*.WAV
 
+# Models and runtime logs
+shared/models/*.onnx
+logs/*.log
+
 # Environment
 .env
 .env.local
